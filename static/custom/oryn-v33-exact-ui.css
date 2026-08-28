@@ -1,0 +1,210 @@
+
+/* ===============================================================
+   ORYN v3.3 EXACT UI PATCH
+   UI only. No motion/controller/calibration mathematics.
+   =============================================================== */
+
+/* PATTERN VISIBILITY
+   Preview PNGs are white background + dark drawing. The original dark theme
+   inverts them, producing a near-black plate. We intentionally disable that
+   inversion, give the actual circular parent a yellow plate, and multiply the
+   white preview into yellow so black drawing lines stay black.
+*/
+.pattern-preview {
+  filter: none !important;
+  mix-blend-mode: multiply !important;
+  opacity: 1 !important;
+  background: transparent !important;
+}
+
+/* Edge/WebView2 supports :has(). This targets the actual circular preview
+   wrapper used by the existing PatternCard and detail preview. */
+div:has(> img.pattern-preview) {
+  background: #FFD600 !important;
+  border-color: #FFD600 !important;
+}
+
+/* Card previews: stronger edge, easy to see in BOTH themes. */
+button div:has(> img.pattern-preview) {
+  box-shadow:
+    0 0 0 2px rgba(255,214,0,.95),
+    0 5px 14px rgba(0,0,0,.28) !important;
+}
+
+/* Selected card gets a clean ORYN yellow accent. */
+button:has(img.pattern-preview):focus,
+button:has(img.pattern-preview):focus-visible {
+  outline: 2px solid #FFD600 !important;
+  outline-offset: 2px !important;
+}
+
+/* Make the preview itself crisp enough for fine THR linework. */
+.pattern-preview {
+  image-rendering: auto;
+  contrast: 1.18;
+}
+
+/* -------- Perimeter Calibration panel -------- */
+#oryn-perimeter-calibration-card {
+  width:100%;
+  padding:18px;
+  border-radius:14px;
+  border:1px solid #333;
+  background:#111 !important;
+  color:#fff !important;
+  box-shadow:0 8px 24px rgba(0,0,0,.22);
+}
+#oryn-perimeter-calibration-card * { box-sizing:border-box; }
+
+.oryn-pc-head {
+  display:flex;
+  align-items:flex-start;
+  justify-content:space-between;
+  gap:12px;
+  margin-bottom:14px;
+}
+.oryn-pc-title {
+  margin:0;
+  font-size:17px;
+  line-height:1.25;
+  font-weight:800;
+  color:#FFD600 !important;
+}
+.oryn-pc-sub {
+  margin-top:4px;
+  font-size:12px;
+  line-height:1.4;
+  color:#bcbcbc !important;
+}
+.oryn-pc-badge {
+  flex:none;
+  padding:5px 9px;
+  border-radius:999px;
+  font-size:10px;
+  font-weight:800;
+  letter-spacing:.03em;
+  background:#252525;
+  color:#fff;
+  border:1px solid #404040;
+}
+.oryn-pc-badge.calibrated {
+  background:#FFD600;
+  color:#050505;
+  border-color:#FFD600;
+}
+.oryn-pc-note {
+  padding:10px 11px;
+  margin-bottom:12px;
+  border-radius:10px;
+  border:1px solid #343434;
+  background:#181818;
+  color:#d7d7d7;
+  font-size:12px;
+  line-height:1.45;
+}
+.oryn-pc-btn {
+  min-height:40px;
+  padding:9px 12px;
+  border-radius:9px;
+  border:1px solid #3a3a3a;
+  background:#1b1b1b;
+  color:#fff;
+  font-size:12px;
+  font-weight:750;
+  cursor:pointer;
+}
+.oryn-pc-btn:hover:not(:disabled) {
+  border-color:#FFD600;
+  background:#222;
+}
+.oryn-pc-btn.primary {
+  width:100%;
+  background:#FFD600;
+  color:#050505;
+  border-color:#FFD600;
+}
+.oryn-pc-btn:disabled {
+  opacity:.42;
+  cursor:not-allowed;
+}
+.oryn-pc-row {
+  display:flex;
+  gap:8px;
+  margin-top:10px;
+}
+.oryn-pc-input {
+  width:100%;
+  min-width:0;
+  min-height:40px;
+  padding:0 11px;
+  border-radius:9px;
+  border:1px solid #3a3a3a;
+  background:#090909 !important;
+  color:#fff !important;
+}
+.oryn-pc-input::placeholder { color:#777 !important; }
+.oryn-pc-meta {
+  display:flex;
+  justify-content:space-between;
+  gap:10px;
+  margin-top:9px;
+  font-size:11px;
+  color:#aaa;
+}
+.oryn-pc-meta strong {
+  color:#fff;
+  font-family:ui-monospace,SFMono-Regular,Menlo,monospace;
+}
+.oryn-pc-current {
+  display:flex;
+  justify-content:space-between;
+  gap:12px;
+  padding:11px 12px;
+  border-radius:10px;
+  border:1px solid #343434;
+  background:#181818;
+  color:#ddd;
+  font-size:12px;
+}
+.oryn-pc-current strong {
+  color:#FFD600;
+  font-family:ui-monospace,SFMono-Regular,Menlo,monospace;
+}
+.oryn-pc-jogs {
+  display:grid;
+  grid-template-columns:repeat(3,minmax(0,1fr));
+  gap:8px;
+  margin-top:10px;
+}
+.oryn-pc-message {
+  min-height:18px;
+  margin-top:10px;
+  color:#FFD600;
+  font-size:11px;
+  line-height:1.35;
+}
+.oryn-pc-reset {
+  margin-top:10px;
+  background:transparent;
+}
+.oryn-pc-error { color:#ff6565 !important; }
+
+/* Even in app LIGHT mode keep this hardware calibration panel high contrast
+   so no text disappears. */
+html:not(.dark) #oryn-perimeter-calibration-card {
+  background:#111 !important;
+  color:#fff !important;
+}
+
+/* Light mode pattern plate remains yellow; the preview never fades into a
+   cream/white card. */
+html:not(.dark) div:has(> img.pattern-preview) {
+  background:#FFD600 !important;
+  border-color:#FFD600 !important;
+}
+
+@media(max-width:720px) {
+  #oryn-perimeter-calibration-card { padding:14px; }
+  .oryn-pc-head { flex-direction:column; }
+  .oryn-pc-jogs { grid-template-columns:repeat(2,minmax(0,1fr)); }
+}

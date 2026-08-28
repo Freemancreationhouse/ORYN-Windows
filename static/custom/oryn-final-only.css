@@ -1,0 +1,275 @@
+
+/* ORYN FINAL UI PATCH — production-only UI. No machine logic. */
+
+/* ---------- Existing working perimeter calibration ---------- */
+#oryn-perimeter-calibration-card {
+  width:100%; padding:18px; border-radius:14px;
+  border:1px solid rgba(199,164,99,.38) !important;
+  background:linear-gradient(145deg,#15181c,#101215) !important;
+  color:#f4f1eb !important;
+  box-shadow:0 8px 24px rgba(0,0,0,.22);
+}
+#oryn-perimeter-calibration-card * { box-sizing:border-box; }
+.oryn-pc-head { display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:14px; }
+.oryn-pc-title { margin:0;font-size:17px;line-height:1.25;font-weight:800;color:#d8bb80 !important; }
+.oryn-pc-sub { margin-top:4px;font-size:12px;line-height:1.4;color:#bbb9b3 !important; }
+.oryn-pc-badge { flex:none;padding:5px 9px;border-radius:999px;font-size:10px;font-weight:800;background:#252525;color:#fff;border:1px solid #444; }
+.oryn-pc-badge.calibrated { background:#c7a463;color:#070707;border-color:#c7a463; }
+.oryn-pc-note { padding:10px 11px;margin-bottom:12px;border-radius:10px;border:1px solid #34383e;background:#181b1f;color:#ddd9d1;font-size:12px;line-height:1.45; }
+.oryn-pc-btn {
+  min-height:40px;padding:9px 12px;border-radius:9px;
+  border:1px solid #45494e !important;background:#202328 !important;
+  color:#f7f4ef !important;font-size:12px;font-weight:750;cursor:pointer;
+}
+.oryn-pc-btn:hover:not(:disabled) { border-color:#c7a463 !important;background:#292c31 !important; }
+.oryn-pc-btn.primary { width:100%;background:#c7a463 !important;color:#090909 !important;border-color:#c7a463 !important; }
+.oryn-pc-btn:disabled { opacity:.45;cursor:not-allowed; }
+.oryn-pc-row { display:flex;gap:8px;margin-top:10px; }
+.oryn-pc-input {
+  width:100%;min-width:0;min-height:40px;padding:0 11px;border-radius:9px;
+  border:1px solid #45494e !important;background:#0b0d10 !important;color:#fff !important;
+}
+.oryn-pc-input::placeholder { color:#898989 !important; }
+.oryn-pc-meta { display:flex;justify-content:space-between;gap:10px;margin-top:9px;font-size:11px;color:#aaa; }
+.oryn-pc-meta strong { color:#fff;font-family:ui-monospace,SFMono-Regular,Menlo,monospace; }
+.oryn-pc-current { display:flex;justify-content:space-between;gap:12px;padding:11px 12px;border-radius:10px;border:1px solid #34383e;background:#181b1f;color:#ddd;font-size:12px; }
+.oryn-pc-current strong { color:#d8bb80;font-family:ui-monospace,SFMono-Regular,Menlo,monospace; }
+.oryn-pc-jogs { display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin-top:10px; }
+.oryn-pc-message { min-height:18px;margin-top:10px;color:#d8bb80;font-size:11px;line-height:1.35; }
+.oryn-pc-error { color:#ff6a6a !important; }
+
+/* ---------- Pattern Forge launch ---------- */
+#oryn-final-forge-launch {
+  display:inline-flex;align-items:center;gap:8px;min-height:40px;padding:0 15px;
+  border-radius:10px;border:1px solid rgba(199,164,99,.62);
+  background:linear-gradient(145deg,#201d17,#151515);color:#ddc187;
+  font-weight:750;cursor:pointer;
+}
+#oryn-final-forge-launch:hover { border-color:#ddc187;background:#252118; }
+
+/* ---------- Pattern Forge modal ---------- */
+#oryn-final-forge-overlay {
+  position:fixed;inset:0;z-index:100000;padding:18px;
+  display:flex;align-items:center;justify-content:center;
+  background:rgba(2,3,4,.86);backdrop-filter:blur(8px);
+}
+#oryn-final-forge {
+  width:min(1180px,97vw);height:min(850px,94vh);max-height:94vh;
+  display:flex;flex-direction:column;overflow:hidden;
+  border:1px solid rgba(199,164,99,.38);border-radius:20px;
+  background:#0e1114;color:#f5f2eb;
+  box-shadow:0 30px 100px rgba(0,0,0,.58);
+}
+.oryn-ff-head {
+  flex:none;display:flex;align-items:center;justify-content:space-between;gap:16px;
+  padding:17px 20px;border-bottom:1px solid #2c3035;
+  background:linear-gradient(110deg,#191c20,#0e1114);
+}
+.oryn-ff-title { font-size:20px;font-weight:850;color:#f5f2eb !important; }
+.oryn-ff-sub { margin-top:3px;font-size:11px;color:#aaa8a2 !important; }
+.oryn-ff-close { width:36px;height:36px;border-radius:9px;border:1px solid #3a3e43;background:#181b1f;color:white;font-size:20px;cursor:pointer; }
+
+.oryn-ff-grid {
+  flex:1;min-height:0;display:grid;grid-template-columns:390px minmax(0,1fr);
+  overflow:hidden;
+}
+
+/* BOTH columns scroll independently */
+.oryn-ff-left {
+  min-height:0;height:100%;overflow-y:auto;overflow-x:hidden;
+  border-right:1px solid #2c3035;padding:20px 20px 100px;
+  scrollbar-gutter:stable;
+}
+.oryn-ff-right {
+  min-height:0;height:100%;overflow-y:auto;overflow-x:hidden;
+  padding:20px 20px 100px;scrollbar-gutter:stable;
+}
+.oryn-ff-left::-webkit-scrollbar,.oryn-ff-right::-webkit-scrollbar { width:10px; }
+.oryn-ff-left::-webkit-scrollbar-track,.oryn-ff-right::-webkit-scrollbar-track { background:#101317; }
+.oryn-ff-left::-webkit-scrollbar-thumb,.oryn-ff-right::-webkit-scrollbar-thumb { background:#4c5055;border-radius:99px;border:2px solid #101317; }
+.oryn-ff-left::-webkit-scrollbar-thumb:hover,.oryn-ff-right::-webkit-scrollbar-thumb:hover { background:#c7a463; }
+
+.oryn-ff-drop {
+  display:block;padding:15px;border:1px dashed #555b61;border-radius:13px;background:#15181c;cursor:pointer;
+}
+.oryn-ff-drop:hover { border-color:#c7a463; }
+.oryn-ff-drop b { display:block;color:#f5f2eb !important;font-size:13px; }
+.oryn-ff-drop small { display:block;margin-top:4px;color:#aaa8a2 !important;font-size:11px; }
+.oryn-ff-file { margin-top:8px;color:#ddc187 !important;font-size:11px;word-break:break-all; }
+
+.oryn-ff-field { margin-top:16px; }
+.oryn-ff-field label {
+  display:flex;justify-content:space-between;gap:12px;margin-bottom:7px;
+  color:#f0ece5 !important;font-size:12px;font-weight:750;
+}
+.oryn-ff-field label span { color:#ddc187 !important;font-weight:650; }
+.oryn-ff-field input[type="text"] {
+  width:100%;height:40px;padding:0 11px;border-radius:9px;
+  border:1px solid #454a50;background:#0b0d10;color:#fff;
+}
+.oryn-ff-field input[type="range"] { width:100%;accent-color:#c7a463; }
+.oryn-ff-field select {
+  width:100%;height:40px;padding:0 10px;border-radius:9px;
+  border:1px solid #454a50;background:#0b0d10;color:#fff;
+}
+.oryn-ff-toggle {
+  display:flex;align-items:center;gap:10px;margin-top:15px;padding:11px;
+  border:1px solid #363a40;border-radius:10px;background:#15181c;color:#f4f1eb;
+}
+.oryn-ff-toggle input { accent-color:#c7a463; }
+.oryn-ff-toggle b { color:#f4f1eb !important;font-size:12px; }
+.oryn-ff-toggle small { display:block;color:#aaa8a2 !important;font-size:10px;margin-top:2px; }
+.oryn-ff-note { margin-top:15px;padding:11px;border-left:3px solid #c7a463;background:#171a1e;color:#c4c0b9 !important;font-size:11px;line-height:1.48; }
+
+.oryn-ff-actions {
+  position:sticky;bottom:-1px;z-index:8;display:flex;gap:9px;
+  margin:20px -4px 0;padding:24px 4px 5px;
+  background:linear-gradient(180deg,rgba(14,17,20,0),#0e1114 42%);
+}
+.oryn-ff-btn {
+  min-height:42px;padding:0 14px;border-radius:9px;border:1px solid #484c52;
+  background:#1b1e22;color:#fff;font-weight:800;cursor:pointer;
+}
+.oryn-ff-btn.primary { flex:1;background:#c7a463;color:#090909;border-color:#c7a463; }
+.oryn-ff-btn:disabled { opacity:.42;cursor:not-allowed; }
+.oryn-ff-status { min-height:20px;margin-top:10px;color:#ddc187 !important;font-size:11px;line-height:1.4; }
+.oryn-ff-status.error { color:#ff6a6a !important; }
+
+/* source preview */
+.oryn-ff-source { padding:11px;border:1px solid #34383e;border-radius:13px;background:#15181c;margin-bottom:14px; }
+.oryn-ff-source-head { display:flex;justify-content:space-between;gap:12px;margin-bottom:8px; }
+.oryn-ff-source-head b { font-size:10px;letter-spacing:.15em;color:#aaa8a2 !important; }
+.oryn-ff-source-head span { max-width:60%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:#ddc187 !important;font-size:10px; }
+.oryn-ff-source-box {
+  height:180px;display:grid;place-items:center;overflow:hidden;border-radius:10px;
+  background:#eee6d9;
+}
+.oryn-ff-source-box img { width:100%;height:100%;object-fit:contain;display:block; }
+.oryn-ff-source-placeholder { padding:20px;text-align:center;color:#6f6c67 !important;font-size:12px; }
+
+/* generated output */
+.oryn-ff-output-head { display:flex;align-items:end;justify-content:space-between;gap:12px;margin:0 0 12px; }
+.oryn-ff-output-head small { display:block;letter-spacing:.16em;color:#858783 !important;font-size:9px; }
+.oryn-ff-output-head b { color:#f5f2eb !important;font-size:15px; }
+.oryn-ff-stats { display:flex;flex-wrap:wrap;gap:6px;justify-content:flex-end; }
+.oryn-ff-chip { padding:5px 8px;border:1px solid #3a3f45;border-radius:999px;background:#171a1e;color:#c7c3bc !important;font-size:10px; }
+.oryn-ff-canvas-wrap {
+  min-height:520px;display:grid;place-items:center;padding:16px;
+  border:1px solid #30343a;border-radius:15px;background:#121519;
+}
+.oryn-ff-disc {
+  width:min(600px,72vh);max-width:100%;aspect-ratio:1;border-radius:50%;
+  background:radial-gradient(circle at 38% 30%,#f5eee3,#e7ddce 58%,#d7caba);
+  border:1px solid rgba(199,164,99,.70);
+  box-shadow:0 15px 38px rgba(0,0,0,.28);
+  overflow:hidden;position:relative;
+}
+.oryn-ff-empty { position:absolute;inset:0;display:grid;place-items:center;text-align:center;padding:22%;color:#716d67 !important;font-size:12px;line-height:1.5; }
+.oryn-ff-disc svg { width:100%;height:100%; }
+#oryn-ff-route { fill:none;stroke:#131313;stroke-width:1.15;vector-effect:non-scaling-stroke;stroke-linecap:round;stroke-linejoin:round; }
+
+/* ---------- Delete button ---------- */
+#oryn-final-delete {
+  min-height:45px;padding:0 14px;border-radius:9px;
+  border:1px solid #a84f56;background:#3a191d;color:#ffb6b9;
+  font-weight:800;cursor:pointer;
+}
+#oryn-final-delete:hover { background:#4a1d22;border-color:#c86168;color:#ffd1d3; }
+
+/* ---------- One footer only, always at page bottom ---------- */
+.km-brand-footer { display:none !important; }
+#oryn-final-footer {
+  width:calc(100% - 32px);max-width:980px;margin:64px auto 118px;padding:18px 16px 0;
+  border-top:1px solid rgba(199,164,99,.24);text-align:center;
+  color:#8f8d87 !important;font-size:12px;letter-spacing:.02em;
+}
+#oryn-final-footer strong { color:inherit !important;font-weight:850; }
+
+/* light mode stays readable */
+body.oryn-theme-light #oryn-final-footer { color:#68645d !important; }
+body.oryn-theme-light #oryn-final-delete { background:#fff0f1;color:#992f37;border-color:#c7676e; }
+
+@media(max-width:820px){
+  #oryn-final-forge-overlay { padding:7px; }
+  #oryn-final-forge { width:100%;height:97vh;max-height:97vh; }
+  .oryn-ff-grid { grid-template-columns:1fr;overflow-y:auto; }
+  .oryn-ff-left,.oryn-ff-right { height:auto;overflow:visible;border-right:0; }
+  .oryn-ff-left { border-bottom:1px solid #2c3035; }
+  .oryn-ff-source-box { height:150px; }
+  .oryn-ff-canvas-wrap { min-height:390px; }
+}
+
+/* =====================================================================
+   USER-REQUESTED FINAL VISIBILITY PATCH — ONLY THESE TWO UI STATES
+   Dark-mode pattern presentation is intentionally untouched.
+   ===================================================================== */
+
+/* Light mode pattern cards: use the earlier readable warm-yellow plate.
+   The preview image's white background multiplies into the plate while its
+   black/grey THR details remain crisp and fully visible. */
+body.oryn-theme-light div:has(> img.pattern-preview) {
+  background:#DDBA62 !important;
+  border-color:#B89245 !important;
+  box-shadow:inset 0 0 0 1px rgba(255,255,255,.28),0 4px 12px rgba(65,46,16,.16) !important;
+}
+body.oryn-theme-light img.pattern-preview {
+  filter:none !important;
+  mix-blend-mode:multiply !important;
+  opacity:1 !important;
+  background:transparent !important;
+}
+
+/* Selected clearing choice: retain the gold selected state, but give every
+   label/icon explicit dark contrast so the option name and description can
+   always be read. */
+.km-clear-tile.is-selected {
+  background:#D3AE5D !important;
+  border-color:#B58D3C !important;
+  color:#11100D !important;
+  box-shadow:inset 3px 0 0 #7D5D21 !important;
+}
+.km-clear-tile.is-selected .km-clear-copy b { color:#11100D !important; }
+.km-clear-tile.is-selected .km-clear-copy small { color:#4A3B21 !important; }
+.km-clear-tile.is-selected .km-clear-icon {
+  color:#15120C !important;
+  background:rgba(255,255,255,.30) !important;
+  border-color:rgba(60,43,15,.28) !important;
+}
+
+/* ==========================================================
+   ORYN WINDOWS — EXACT CLEAR SELECTION VISIBILITY FIX ONLY
+   Targets only the checked preExecutionAction label rendered
+   in the existing locked pattern detail panel.
+   ========================================================== */
+label:has(input[name="preExecutionAction"]:checked) {
+    background: transparent !important;
+    background-color: transparent !important;
+    background-image: none !important;
+    color: #F2F2F2 !important;
+    -webkit-text-fill-color: #F2F2F2 !important;
+    border-color: #D3AA46 !important;
+    box-shadow: 0 0 0 2px #D3AA46 !important;
+    opacity: 1 !important;
+}
+
+label:has(input[name="preExecutionAction"]:checked) * {
+    color: #F2F2F2 !important;
+    -webkit-text-fill-color: #F2F2F2 !important;
+    opacity: 1 !important;
+}
+
+
+
+/* ORYN Pattern Forge V10.4 exact served UI corrections */
+.oryn-ff-source-box{
+  height:300px!important;min-height:300px!important;
+  background-color:#f2eee7!important;
+  background-repeat:no-repeat!important;
+  background-position:center center!important;
+  background-size:contain!important;
+  overflow:hidden!important;
+}
+.oryn-ff-source-box.has-source{background-repeat:no-repeat!important;background-position:center!important;background-size:contain!important;}
+.oryn-ff-source-box.has-source img{display:none!important;}
+.oryn-ff-field select{width:100%;height:39px;background:#0B0D10;color:#fff;border:1px solid #353A40;border-radius:9px;padding:0 10px;}
+@media(max-width:800px){.oryn-ff-source-box{height:240px!important;min-height:240px!important;}}

@@ -1,0 +1,9 @@
+[Desktop Entry]
+Type=Application
+Name=KinetiQ Motion Touch
+Comment=KinetiQ Motion Touch Interface
+Exec=python3 /home/pi/kinetiq-motion-touch/main.py
+Path=/home/pi/kinetiq-motion-touch
+Terminal=false
+StartupNotify=true
+X-GNOME-Autostart-enabled=true

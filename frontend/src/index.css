@@ -1,0 +1,1030 @@
+@import "tailwindcss";
+
+/* Fonts imported in main.tsx (self-hosted, no CDN dependency) */
+
+/* Theme configuration using CSS variables */
+@theme {
+  --color-border: hsl(214.3 31.8% 91.4%);
+  --color-input: hsl(214.3 31.8% 91.4%);
+  --color-ring: hsl(207 90% 50%);
+  --color-background: hsl(220 14% 98%);
+  --color-foreground: hsl(222.2 84% 4.9%);
+
+  --color-primary: hsl(207 90% 50%);
+  --color-primary-foreground: hsl(210 40% 98%);
+
+  --color-secondary: hsl(210 40% 96.1%);
+  --color-secondary-foreground: hsl(222.2 47.4% 11.2%);
+
+  --color-muted: hsl(220 14% 92%);
+  --color-muted-foreground: hsl(215.4 16.3% 46.9%);
+
+  --color-accent: hsl(210 40% 96.1%);
+  --color-accent-foreground: hsl(222.2 47.4% 11.2%);
+
+  --color-destructive: hsl(0 84.2% 60.2%);
+  --color-destructive-foreground: hsl(210 40% 98%);
+
+  --color-card: hsl(0 0% 100%);
+  --color-card-foreground: hsl(222.2 84% 4.9%);
+
+  --color-popover: hsl(0 0% 100%);
+  --color-popover-foreground: hsl(222.2 84% 4.9%);
+
+  --radius: 0.5rem;
+  --radius-lg: 0.75rem;
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-sm: calc(var(--radius) - 4px);
+
+  --font-family-sans: 'Plus Jakarta Sans', 'Noto Sans', sans-serif;
+}
+
+/* Dark mode */
+.dark {
+  color-scheme: dark;
+  --color-border: hsl(0 0% 32%);
+  --color-input: hsl(0 0% 32%);
+  --color-ring: hsl(207 90% 50%);
+  --color-background: hsl(0 0% 10%);
+  --color-foreground: hsl(210 40% 98%);
+
+  --color-primary: hsl(207 90% 50%);
+  --color-primary-foreground: hsl(210 40% 98%);
+
+  --color-secondary: hsl(0 0% 25%);
+  --color-secondary-foreground: hsl(210 40% 98%);
+
+  --color-muted: hsl(0 0% 25%);
+  --color-muted-foreground: hsl(215 20.2% 65.1%);
+
+  --color-accent: hsl(0 0% 25%);
+  --color-accent-foreground: hsl(210 40% 98%);
+
+  --color-destructive: hsl(0 62.8% 50.6%);
+  --color-destructive-foreground: hsl(210 40% 98%);
+
+  --color-card: hsl(0 0% 18%);
+  --color-card-foreground: hsl(210 40% 98%);
+
+  --color-input-background: hsl(0 0% 28%);
+
+  --color-popover: hsl(0 0% 15%);
+  --color-popover-foreground: hsl(210 40% 98%);
+}
+
+/* Base styles */
+* {
+  border-color: var(--color-border);
+}
+
+/* Form label spacing - adds margin below labels for better readability */
+label {
+  display: block;
+  margin-bottom: 0.5rem;
+}
+
+/* Form input background - lighter than card for visibility */
+.dark input:not([type="checkbox"]):not([type="radio"]),
+.dark select,
+.dark textarea,
+.dark [role="combobox"] {
+  background-color: var(--color-input-background);
+}
+
+body {
+  background-color: var(--color-background);
+  color: var(--color-foreground);
+  font-family: var(--font-family-sans);
+  margin: 0;
+  min-height: 100dvh; /* Use dynamic viewport height for mobile */
+}
+
+/* Push Sonner toasts below the Dynamic Island / notch in PWA mode */
+[data-sonner-toaster][data-y-position="top"] {
+  top: env(safe-area-inset-top, 0px) !important;
+}
+
+/* Safe area utilities for iOS notch/Dynamic Island/home indicator */
+.pt-safe {
+  padding-top: env(safe-area-inset-top, 0px);
+}
+
+.pb-safe {
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+.mt-safe {
+  margin-top: env(safe-area-inset-top, 0px);
+}
+
+.mb-safe {
+  margin-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+/* Material Icons */
+.material-icons,
+.material-icons-outlined {
+  font-family: 'Material Icons';
+  font-weight: normal;
+  font-style: normal;
+  font-size: 24px;
+  line-height: 1;
+  letter-spacing: normal;
+  text-transform: none;
+  display: inline-block;
+  white-space: nowrap;
+  word-wrap: normal;
+  direction: ltr;
+  -webkit-font-feature-settings: 'liga';
+  -webkit-font-smoothing: antialiased;
+}
+
+.material-icons-outlined {
+  font-family: 'Material Icons Outlined';
+}
+
+/* Invert pattern previews in dark mode */
+.dark .pattern-preview {
+  filter: invert(1);
+}
+
+/* Marquee animation for scrolling text */
+@keyframes marquee {
+  0%, 10% {
+    transform: translateX(calc(-100% + 100cqw));
+  }
+  45%, 55% {
+    transform: translateX(0);
+  }
+  90%, 100% {
+    transform: translateX(calc(-100% + 100cqw));
+  }
+}
+
+.marquee-container {
+  container-type: inline-size;
+  overflow: hidden;
+}
+
+.animate-marquee {
+  display: inline-block;
+}
+
+/* Marquee animation only on mobile */
+@media (max-width: 767px) {
+  .animate-marquee {
+    animation: marquee 8s ease-in-out infinite;
+    animation-play-state: running;
+  }
+
+  .animate-marquee:hover {
+    animation-play-state: paused;
+  }
+}
+
+/* Now Playing Bar heights - responsive for mobile vs desktop */
+[data-now-playing-bar="collapsed"] {
+  height: 232px;
+}
+
+[data-now-playing-bar="expanded"] {
+  height: 50vh;
+}
+
+@media (max-width: 767px) {
+  [data-now-playing-bar="collapsed"] {
+    height: 288px;
+  }
+
+  [data-now-playing-bar="expanded"] {
+    height: calc(100vh - 64px - 64px - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px));
+  }
+}
+
+/* Smooth fade in for lazy-loaded content */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.2s ease-out forwards;
+}
+
+/* Subtle pulse for connection status */
+@keyframes subtle-pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.6;
+  }
+}
+
+.animate-subtle-pulse {
+  animation: subtle-pulse 2s ease-in-out infinite;
+}
+
+/* Slide in from right for panels */
+@keyframes slideInRight {
+  from {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+.animate-slide-in-right {
+  animation: slideInRight 0.3s ease-out forwards;
+}
+
+/* ================================================================
+   STUDIO KINEMATICS — ORYN MOTION UI EDITION
+   VISUAL SKIN ONLY. No motion/controller behavior is defined here.
+   ================================================================ */
+
+:root {
+  --km-ink: #101318;
+  --km-paper: #f3f5f7;
+  --km-panel: rgba(255,255,255,.92);
+  --km-line: rgba(16,19,24,.10);
+  --km-accent: #0b84ff;
+  --km-accent-soft: rgba(11,132,255,.10);
+  --km-success: #18a66a;
+  --km-warning: #d99100;
+  --km-danger: #d83c45;
+  --km-shadow: 0 18px 50px rgba(16,19,24,.08);
+  --km-shadow-soft: 0 8px 24px rgba(16,19,24,.06);
+}
+
+.dark {
+  --km-ink: #f7f8fa;
+  --km-paper: #0b0e12;
+  --km-panel: rgba(20,24,30,.94);
+  --km-line: rgba(255,255,255,.10);
+  --km-accent: #4aa8ff;
+  --km-accent-soft: rgba(74,168,255,.13);
+  --km-shadow: 0 18px 55px rgba(0,0,0,.28);
+  --km-shadow-soft: 0 8px 28px rgba(0,0,0,.22);
+}
+
+html { background: var(--km-paper); }
+body {
+  background:
+    radial-gradient(circle at 10% -10%, rgba(11,132,255,.09), transparent 28rem),
+    radial-gradient(circle at 95% 0%, rgba(24,166,106,.05), transparent 24rem),
+    var(--km-paper);
+  letter-spacing: -.01em;
+}
+
+/* Make the application shell feel like a precision control surface rather
+   than the upstream rounded-card language. */
+.min-h-dvh.bg-background {
+  background: transparent !important;
+}
+
+/* Cards / panels */
+.rounded-lg,
+.rounded-xl,
+.rounded-2xl,
+[class*="rounded-lg"],
+[class*="rounded-xl"] {
+  border-radius: 18px !important;
+}
+
+.border.bg-card,
+.bg-card.border,
+.bg-background.rounded-lg,
+.bg-background.rounded-xl,
+.bg-muted\/50.rounded-lg,
+[role="dialog"] > div {
+  border-color: var(--km-line) !important;
+  box-shadow: var(--km-shadow-soft);
+}
+
+/* Headings */
+h1, h2, h3 {
+  letter-spacing: -.035em;
+}
+h1 { font-weight: 800 !important; }
+h2, h3 { font-weight: 700 !important; }
+
+/* Buttons: new rectangular-pill hybrid, clearer hierarchy */
+button,
+[role="button"] {
+  transition: transform .14s ease, box-shadow .14s ease, background-color .14s ease, border-color .14s ease, opacity .14s ease;
+}
+button:not(:disabled):active,
+[role="button"]:not([aria-disabled="true"]):active {
+  transform: scale(.985);
+}
+button[class*="bg-primary"],
+button.bg-primary {
+  border-radius: 12px !important;
+  box-shadow: 0 8px 20px rgba(11,132,255,.18);
+  font-weight: 700;
+}
+button[class*="variant-outline"],
+button.border,
+button[class*="bg-secondary"] {
+  border-radius: 12px !important;
+}
+
+/* Icons become compact control tiles instead of loose glyphs. */
+button > .material-icons,
+button > .material-icons-outlined,
+a > .material-icons,
+a > .material-icons-outlined {
+  font-size: 20px !important;
+}
+.material-icons,
+.material-icons-outlined {
+  vertical-align: middle;
+}
+
+/* Navigation buttons get a distinct technical-console treatment. */
+nav a,
+nav button,
+aside a,
+aside button {
+  border-radius: 14px !important;
+}
+nav a .material-icons,
+nav a .material-icons-outlined,
+aside a .material-icons,
+aside a .material-icons-outlined {
+  font-size: 21px !important;
+}
+
+/* Inputs / selects */
+input:not([type="checkbox"]):not([type="radio"]),
+select,
+textarea,
+[role="combobox"] {
+  border-radius: 12px !important;
+  border-color: var(--km-line) !important;
+  min-height: 42px;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.3);
+}
+input:focus,
+select:focus,
+textarea:focus,
+[role="combobox"]:focus {
+  outline: none !important;
+  box-shadow: 0 0 0 3px var(--km-accent-soft) !important;
+}
+
+/* Pattern art gets a more gallery-like frame. */
+.pattern-preview {
+  border-radius: 16px;
+  transition: transform .18s ease, filter .18s ease;
+}
+.group:hover .pattern-preview,
+.pattern-preview:hover {
+  transform: scale(1.018);
+}
+
+/* Status chips */
+[class*="rounded-full"] {
+  letter-spacing: .01em;
+}
+
+/* Dialogs and overlays */
+.fixed.inset-0 > .bg-background,
+.fixed.inset-0 .bg-background.rounded-lg,
+.fixed.inset-0 .bg-background.rounded-xl {
+  border: 1px solid var(--km-line);
+  box-shadow: var(--km-shadow);
+}
+
+/* Logs / terminal: dark instrument panel regardless of light/dark theme. */
+.font-mono {
+  font-variant-ligatures: none;
+}
+[class*="font-mono"][class*="overflow-auto"] {
+  scrollbar-width: thin;
+}
+
+/* Scrollbars */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(115,125,135,.42) transparent;
+}
+*::-webkit-scrollbar { width: 8px; height: 8px; }
+*::-webkit-scrollbar-track { background: transparent; }
+*::-webkit-scrollbar-thumb {
+  background: rgba(115,125,135,.36);
+  border-radius: 999px;
+  border: 2px solid transparent;
+  background-clip: padding-box;
+}
+
+/* Desktop: give the UI more air and smaller chrome */
+@media (min-width: 1024px) {
+  main { padding-inline: clamp(18px, 2.2vw, 38px); }
+  .max-w-7xl { max-width: 92rem !important; }
+}
+
+/* Mobile: larger touch targets without huge visual weight */
+@media (max-width: 767px) {
+  button, [role="button"] { min-height: 42px; }
+  button > .material-icons,
+  button > .material-icons-outlined { font-size: 22px !important; }
+  .rounded-lg, .rounded-xl, .rounded-2xl { border-radius: 15px !important; }
+}
+
+/* Reduced-motion support */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: .01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: .01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+
+/* ==========================================================================
+   ORYN MOTION — STUDIO KINEMATICS VISUAL SYSTEM v2.2
+   APPEARANCE ONLY. No component logic, API, motion, homing or controller code.
+   ========================================================================== */
+
+:root {
+  --radius: 0.45rem;
+  --background: 222 22% 7%;
+  --foreground: 42 24% 94%;
+  --card: 222 18% 10%;
+  --card-foreground: 42 24% 94%;
+  --popover: 222 18% 10%;
+  --popover-foreground: 42 24% 94%;
+  --primary: 39 64% 57%;
+  --primary-foreground: 222 22% 7%;
+  --secondary: 220 14% 15%;
+  --secondary-foreground: 42 18% 90%;
+  --muted: 220 13% 14%;
+  --muted-foreground: 218 9% 62%;
+  --accent: 39 32% 17%;
+  --accent-foreground: 42 35% 91%;
+  --border: 220 12% 22%;
+  --input: 220 12% 24%;
+  --ring: 39 64% 57%;
+}
+
+html, body, #root {
+  min-height: 100%;
+  background:
+    radial-gradient(circle at 18% -10%, rgba(206,161,82,.10), transparent 28rem),
+    linear-gradient(180deg,#0c1015 0%,#10151b 100%) !important;
+}
+
+body {
+  letter-spacing: .005em;
+}
+
+/* Main content becomes a framed instrument panel rather than a white web page. */
+main {
+  background: transparent !important;
+}
+
+main > div {
+  max-width: 1180px !important;
+}
+
+/* Header / table selector: angular floating command bar */
+header,
+[class*="sticky"][class*="top-0"] {
+  background: rgba(11,15,20,.88) !important;
+  backdrop-filter: blur(18px) saturate(125%);
+  border-bottom-color: rgba(255,255,255,.06) !important;
+}
+
+header [class*="rounded-full"],
+[class*="fixed"][class*="top-"][class*="rounded-full"] {
+  border-radius: 10px !important;
+}
+
+header button,
+header [role="button"] {
+  min-height: 42px;
+}
+
+/* All cards: technical chamfered panels, not soft Dune-style cards. */
+[class*="bg-card"][class*="border"],
+[class*="rounded-lg"][class*="border"],
+[class*="rounded-xl"][class*="border"],
+[class*="rounded-2xl"][class*="border"] {
+  border-radius: 10px !important;
+  border-color: rgba(255,255,255,.085) !important;
+  background:
+    linear-gradient(145deg,rgba(255,255,255,.028),rgba(255,255,255,.006)),
+    #131920 !important;
+  box-shadow: 0 14px 34px rgba(0,0,0,.20) !important;
+}
+
+/* Pattern cards: taller gallery tiles with a strong image frame. */
+.pattern-card,
+[class*="group"][class*="bg-card"] {
+  border-radius: 8px !important;
+  overflow: hidden;
+  transition: transform .18s ease, border-color .18s ease, box-shadow .18s ease !important;
+}
+.pattern-card:hover,
+[class*="group"][class*="bg-card"]:hover {
+  transform: translateY(-4px);
+  border-color: rgba(206,161,82,.52) !important;
+  box-shadow: 0 18px 42px rgba(0,0,0,.35) !important;
+}
+.pattern-preview {
+  background: #e9e6df !important;
+  border-radius: 5px !important;
+}
+
+/* Buttons: compact rectangular hardware-key language. */
+button,
+[role="button"],
+a[class*="inline-flex"] {
+  border-radius: 7px !important;
+  font-weight: 650 !important;
+  letter-spacing: .015em;
+}
+button[class*="rounded-full"],
+[role="button"][class*="rounded-full"] {
+  border-radius: 7px !important;
+}
+button:not(:disabled):active {
+  transform: translateY(1px) scale(.985);
+}
+
+/* Primary action = gold instrument key */
+button[class*="bg-primary"],
+[role="button"][class*="bg-primary"] {
+  box-shadow: inset 0 1px rgba(255,255,255,.22), 0 7px 18px rgba(0,0,0,.22);
+}
+
+/* Inputs/selects: squared console fields */
+input,
+select,
+textarea,
+[role="combobox"] {
+  border-radius: 7px !important;
+  min-height: 42px;
+  background: #0e141a !important;
+  border-color: rgba(255,255,255,.11) !important;
+}
+input:focus,
+textarea:focus,
+[role="combobox"]:focus {
+  box-shadow: 0 0 0 2px rgba(206,161,82,.18) !important;
+}
+
+/* Icons: visible framed controls instead of tiny line glyphs */
+button svg,
+nav svg,
+header svg,
+button .material-icons,
+button .material-icons-outlined,
+nav .material-icons,
+nav .material-icons-outlined {
+  width: 21px !important;
+  height: 21px !important;
+  font-size: 21px !important;
+  stroke-width: 1.8 !important;
+}
+nav a > svg,
+nav a > span:first-child:not(:last-child),
+nav button > svg {
+  filter: drop-shadow(0 2px 5px rgba(0,0,0,.3));
+}
+
+/* Bottom nav becomes a floating dark control dock on desktop. */
+nav.fixed.bottom-0 {
+  left: 50% !important;
+  right: auto !important;
+  bottom: 18px !important;
+  width: min(760px, calc(100vw - 34px)) !important;
+  transform: translateX(-50%);
+  border: 1px solid rgba(255,255,255,.10) !important;
+  border-radius: 14px !important;
+  background: rgba(15,20,26,.94) !important;
+  box-shadow: 0 20px 48px rgba(0,0,0,.40) !important;
+  backdrop-filter: blur(18px);
+  padding: 6px 10px calc(6px + env(safe-area-inset-bottom,0px)) !important;
+}
+nav.fixed.bottom-0 a {
+  border-radius: 9px !important;
+  min-height: 58px;
+  margin: 0 3px;
+  color: #8f98a4 !important;
+}
+nav.fixed.bottom-0 a:hover {
+  background: rgba(255,255,255,.045) !important;
+  color: #e9dfca !important;
+}
+nav.fixed.bottom-0 a[aria-current="page"],
+nav.fixed.bottom-0 a[class*="text-primary"] {
+  color: #d4ab61 !important;
+  background: rgba(206,161,82,.10) !important;
+}
+nav.fixed.bottom-0 a span.absolute {
+  width: 26px !important;
+  height: 2px !important;
+  top: auto !important;
+  bottom: 3px !important;
+  border-radius: 0 !important;
+}
+
+/* Section titles use stronger industrial hierarchy. */
+h1 {
+  font-weight: 760 !important;
+  letter-spacing: -.035em !important;
+}
+h2, h3 {
+  letter-spacing: -.018em !important;
+}
+
+/* Status indicators: squared micro LEDs */
+span[class*="rounded-full"][class*="bg-green"],
+span[class*="rounded-full"][class*="bg-red"],
+span[class*="rounded-full"][class*="bg-blue"] {
+  border-radius: 2px !important;
+}
+
+/* Sliders become thin instrument rails. */
+input[type="range"] {
+  min-height: 6px !important;
+  height: 6px !important;
+  border-radius: 2px !important;
+}
+
+/* Dialogs / sheets: stronger geometry */
+[role="dialog"] {
+  border-radius: 12px !important;
+  border-color: rgba(255,255,255,.12) !important;
+  background: #11171d !important;
+  box-shadow: 0 28px 80px rgba(0,0,0,.58) !important;
+}
+
+/* Scrollbar */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: #4b5159 #10151b;
+}
+::-webkit-scrollbar { width: 8px; height: 8px; }
+::-webkit-scrollbar-track { background: #10151b; }
+::-webkit-scrollbar-thumb { background: #4b5159; border-radius: 2px; }
+::-webkit-scrollbar-thumb:hover { background: #caa15c; }
+
+/* Give pages breathing room above floating dock. */
+main, [class*="pb-20"], [class*="pb-24"] {
+  padding-bottom: 108px !important;
+}
+
+/* Mobile: dock spans width but keeps the new visual language. */
+@media (max-width: 767px) {
+  nav.fixed.bottom-0 {
+    width: calc(100vw - 16px) !important;
+    bottom: 8px !important;
+    border-radius: 12px !important;
+    padding-left: 4px !important;
+    padding-right: 4px !important;
+  }
+  nav.fixed.bottom-0 a {
+    min-height: 56px;
+    margin: 0 1px;
+  }
+  button svg, nav svg, header svg {
+    width: 20px !important;
+    height: 20px !important;
+  }
+}
+
+/* Light mode still looks like ORYN, not the source UI. */
+html:not(.dark) body,
+html:not(.dark) #root {
+  background:
+    radial-gradient(circle at 15% -10%, rgba(180,128,47,.10), transparent 30rem),
+    #ece9e2 !important;
+}
+html:not(.dark) [class*="bg-card"][class*="border"],
+html:not(.dark) [class*="rounded-lg"][class*="border"],
+html:not(.dark) [class*="rounded-xl"][class*="border"] {
+  background: #f7f5ef !important;
+  border-color: rgba(28,32,37,.13) !important;
+  box-shadow: 0 12px 30px rgba(28,32,37,.08) !important;
+}
+html:not(.dark) nav.fixed.bottom-0 {
+  background: rgba(27,32,38,.96) !important;
+}
+html:not(.dark) input,
+html:not(.dark) select,
+html:not(.dark) textarea,
+html:not(.dark) [role="combobox"] {
+  background: #fffdfa !important;
+}
+
+/* ========================================================================
+   ORYN MOTION v3 — COMPONENT REDESIGN
+   Presentation + Pattern Forge only. Motion/controller core is unchanged.
+   ======================================================================== */
+.km-toolbar-button{height:42px!important;border-radius:12px!important;padding:0 14px!important;background:transparent!important;border:1px solid color-mix(in srgb,currentColor 15%,transparent)!important}
+.km-forge-button{height:42px!important;border-radius:12px!important;padding:0 16px!important;background:linear-gradient(135deg,#c89948,#e3bc72)!important;color:#17120a!important;border:0!important;box-shadow:0 8px 24px rgba(182,132,47,.22)!important}
+.km-preview-frame{border-radius:24px!important;border:1px solid rgba(255,255,255,.12)!important;background:#ece7dc!important;padding:10px;box-shadow:inset 0 0 0 1px rgba(0,0,0,.08),0 20px 40px rgba(0,0,0,.24)!important;clip-path:polygon(0 14px,14px 0,100% 0,100% calc(100% - 14px),calc(100% - 14px) 100%,0 100%)}
+.km-preview-play{width:48px;height:48px;border-radius:14px;background:#111820;color:#e0b765;display:grid;place-items:center;border:1px solid rgba(255,255,255,.12);box-shadow:0 10px 24px rgba(0,0,0,.35)}
+.km-eyebrow{font-size:9px;font-weight:800;letter-spacing:.18em;color:rgba(255,255,255,.38);margin-bottom:2px}.km-mini-badge{font-size:9px;text-transform:uppercase;letter-spacing:.1em;color:#cfa657;border:1px solid rgba(207,166,87,.25);padding:5px 8px;border-radius:7px;background:rgba(207,166,87,.07)}
+.km-clear-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}.km-clear-tile{min-height:76px!important;padding:11px!important;border-radius:14px!important;border:1px solid rgba(255,255,255,.09)!important;background:#11171e!important;color:#c7ced6!important;display:flex!important;align-items:center!important;justify-content:flex-start!important;gap:11px!important;text-align:left!important;box-shadow:none!important}.km-clear-tile:hover{border-color:rgba(208,166,86,.45)!important;background:#161d25!important}.km-clear-tile.is-selected{background:linear-gradient(145deg,rgba(202,158,75,.18),rgba(202,158,75,.06))!important;border-color:#caa04f!important;box-shadow:inset 3px 0 0 #d7ae60!important}.km-clear-icon{width:38px;height:38px;border-radius:11px;display:grid;place-items:center;background:#0b1015;border:1px solid rgba(255,255,255,.08);color:#8f9aa6}.km-clear-tile.is-selected .km-clear-icon{color:#e1b967;background:#211b11;border-color:rgba(225,185,103,.25)}.km-clear-copy{display:flex;flex-direction:column;gap:2px}.km-clear-copy b{font-size:12px;color:#eef1f3}.km-clear-copy small{font-size:9px;color:#7f8b97}.km-action-deck{border-top:1px solid rgba(255,255,255,.08);padding-top:16px}.km-play-command{height:66px!important;border-radius:16px!important;display:flex!important;justify-content:flex-start!important;gap:12px!important;background:linear-gradient(120deg,#d6a954,#bc8b36)!important;color:#17120a!important;padding:0 18px!important}.km-play-symbol{width:40px;height:40px;border-radius:12px;background:rgba(20,15,8,.13);display:grid;place-items:center}.km-play-command>span:last-child,.km-queue-command>span:last-child{display:flex;flex-direction:column;text-align:left;line-height:1.05}.km-play-command b{font-size:14px}.km-play-command small{font-size:9px;opacity:.66;margin-top:4px;text-transform:uppercase;letter-spacing:.07em}.km-square-danger{width:66px!important;height:66px!important;padding:0!important;border-radius:16px!important}.km-queue-command{height:52px!important;border-radius:14px!important;display:flex!important;justify-content:flex-start!important;gap:11px!important;padding:0 14px!important;background:#10161d!important}.km-queue-command b{font-size:12px}.km-queue-command small{font-size:9px;color:#73808c;margin-top:3px}
+.km-nav-icon{width:34px;height:28px;display:grid;place-items:center;border-radius:9px;color:#76818d;transition:.18s}.km-nav-icon.is-active{background:rgba(205,163,82,.13);color:#d5aa59}.km-nav-active-dot{position:absolute;bottom:4px;width:4px;height:4px;border-radius:50%;background:#d5aa59;box-shadow:0 0 8px rgba(213,170,89,.7)}.km-now-icon{width:27px;height:27px;border-radius:8px;display:grid;place-items:center;background:rgba(255,255,255,.05)}.km-now-icon.is-live{color:#d5aa59;background:rgba(213,170,89,.12)}
+.km-icon-tile{width:44px;height:44px;border-radius:13px;background:#171e26;border:1px solid rgba(255,255,255,.09);display:grid;place-items:center;color:#93a0ad}.km-icon-tile-gold{color:#d7ab5b;background:rgba(215,171,91,.09);border-color:rgba(215,171,91,.22)}.km-drop-zone{min-height:88px;border:1px dashed rgba(255,255,255,.16);border-radius:16px;padding:15px;display:flex;align-items:center;justify-content:space-between;cursor:pointer;background:rgba(255,255,255,.02)}.km-drop-zone:hover{border-color:rgba(214,171,90,.55);background:rgba(214,171,90,.035)}.km-drop-zone b{font-size:12px}.km-drop-zone p{font-size:9px;color:rgba(255,255,255,.4);margin-top:3px}.km-format-chip{font-size:9px;letter-spacing:.1em;padding:5px 7px;border-radius:6px;background:#080c10;color:#d7ab5b}.km-toggle-row{width:100%;display:flex!important;align-items:center!important;justify-content:flex-start!important;text-align:left!important;gap:10px!important;border:1px solid rgba(255,255,255,.08)!important;background:#10161c!important;border-radius:13px!important;padding:10px 12px!important}.km-toggle-dot{width:30px;height:17px;border-radius:10px;background:#29313a;position:relative;flex:none}.km-toggle-dot:after{content:'';position:absolute;width:11px;height:11px;border-radius:50%;top:3px;left:3px;background:#88939e;transition:.18s}.km-toggle-row.is-on .km-toggle-dot{background:#725a2d}.km-toggle-row.is-on .km-toggle-dot:after{left:16px;background:#e0b765}.km-toggle-row div{display:flex;flex-direction:column}.km-toggle-row b{font-size:11px}.km-toggle-row small{font-size:9px;color:rgba(255,255,255,.4);margin-top:2px}.km-generator-note{display:flex;gap:9px;padding:11px;border-radius:12px;background:rgba(91,143,117,.08);border:1px solid rgba(91,143,117,.15);color:#8cb59e;font-size:9px;line-height:1.45}.km-action-primary{border-radius:13px!important;background:linear-gradient(135deg,#d5a752,#b98533)!important;color:#161109!important}.km-stat-chip{font-size:9px;color:#aab3bc;background:#121920;border:1px solid rgba(255,255,255,.08);border-radius:7px;padding:5px 8px}.km-forge-preview{border-radius:20px;border:1px solid rgba(255,255,255,.08);background:radial-gradient(circle at center,#151d25 0,#0b1015 70%);min-height:390px;overflow:hidden}.km-table-disc{fill:#ded7c9;stroke:#8e7750;stroke-width:1}.km-route-line{stroke:#17120d;stroke-width:1.35;stroke-linecap:round;stroke-linejoin:round}.km-center-dot{fill:#c29142}
+@media(max-width:767px){.km-clear-grid{grid-template-columns:1fr}.km-preview-frame{max-width:260px!important}.km-forge-preview{min-height:300px}}
+
+
+/* ORYN v3.1 — Studio Kinematics branding only */
+.km-brand-logo {
+  filter: drop-shadow(0 3px 8px rgba(0,0,0,.28));
+  flex: 0 0 auto;
+}
+.km-brand-footer {
+  margin: 56px auto 14px;
+  padding: 16px 18px;
+  max-width: 760px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+  color: hsl(var(--muted-foreground));
+  font-size: 12px;
+  letter-spacing: .035em;
+  border-top: 1px solid hsl(var(--border) / .65);
+}
+.km-brand-footer-logo {
+  width: 24px;
+  height: 24px;
+  object-fit: contain;
+  margin-right: 2px;
+}
+.km-brand-footer strong {
+  color: hsl(var(--foreground));
+  font-weight: 700;
+}
+.km-brand-footer-sep { opacity: .5; }
+@media (max-width: 560px) {
+  .km-brand-footer {
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-top: 40px;
+    padding-bottom: 8px;
+  }
+}
+
+
+/* ORYN v3.2 — UI correction only */
+.km-brand-logo,
+.km-brand-footer-logo {
+  border-radius: 9999px !important;
+  overflow: hidden;
+  background: #101114;
+  object-fit: cover !important;
+  border: 1px solid hsl(var(--border) / .75);
+  box-shadow:
+    0 0 0 2px hsl(var(--background) / .9),
+    0 5px 14px rgba(0,0,0,.28);
+}
+.km-brand-footer-logo {
+  width: 25px !important;
+  height: 25px !important;
+}
+
+.km-forge-source-panel,
+.km-forge-route-panel {
+  position: relative;
+  min-height: 320px;
+  display: grid;
+  place-items: center;
+  border-radius: 14px;
+  overflow: hidden;
+  background: rgba(255,255,255,.025);
+  border: 1px solid rgba(255,255,255,.08);
+}
+.km-forge-source-image {
+  width: 100%;
+  height: 100%;
+  max-height: 500px;
+  object-fit: contain;
+  background: #f0eee8;
+}
+.km-forge-panel-label {
+  position: absolute;
+  z-index: 2;
+  top: 10px;
+  left: 10px;
+  padding: 5px 8px;
+  border-radius: 6px;
+  background: rgba(8,12,16,.82);
+  color: rgba(255,255,255,.76);
+  font-size: 9px;
+  letter-spacing: .14em;
+  font-weight: 750;
+}
+
+/* ORYN — Designed to Move — by Studio Kinematics™ | final UI skin only */
+:root{
+--background:0 0% 3%;--foreground:0 0% 100%;--card:0 0% 7%;--card-foreground:0 0% 100%;
+--popover:0 0% 6%;--popover-foreground:0 0% 100%;--primary:48 100% 50%;
+--primary-foreground:0 0% 3%;--secondary:0 0% 12%;--secondary-foreground:0 0% 100%;
+--muted:0 0% 11%;--muted-foreground:0 0% 68%;--accent:48 100% 50%;
+--accent-foreground:0 0% 3%;--border:0 0% 19%;--input:0 0% 18%;--ring:48 100% 50%}
+html,body,#root{background:#080808!important;color:#fff!important}
+body{background:radial-gradient(circle at 16% -8%,rgba(255,214,0,.10),transparent 30rem),#080808!important}
+header,[class*="sticky"][class*="top-0"]{background:rgba(7,7,7,.94)!important;border-bottom-color:rgba(255,214,0,.16)!important}
+[class*="bg-card"][class*="border"],[class*="rounded-lg"][class*="border"],[class*="rounded-xl"][class*="border"],[class*="rounded-2xl"][class*="border"]{background:#111!important;border-color:#292929!important;color:#fff!important}
+button[class*="bg-primary"],[role="button"][class*="bg-primary"]{background:#ffd600!important;color:#080808!important;border-color:#ffd600!important}
+button:not(:disabled):hover{border-color:rgba(255,214,0,.65)!important}
+input,select,textarea,[role="combobox"]{background:#0c0c0c!important;color:#fff!important;border-color:#2b2b2b!important}
+nav.fixed.bottom-0{background:rgba(8,8,8,.97)!important;border-color:rgba(255,214,0,.20)!important}
+nav.fixed.bottom-0 a{color:#9d9d9d!important}
+nav.fixed.bottom-0 a:hover,nav.fixed.bottom-0 a[aria-current="page"],nav.fixed.bottom-0 a[class*="text-primary"]{color:#ffd600!important;background:rgba(255,214,0,.08)!important}
+.km-route-line{stroke:#ffd600!important}.km-center-dot{fill:#fff!important}
+.km-brand-footer strong,h1,h2,h3,h4{color:#fff!important}
+.km-brand-footer{border-top-color:rgba(255,214,0,.18)!important}
+::-webkit-scrollbar-track{background:#080808!important}::-webkit-scrollbar-thumb{background:#333!important}::-webkit-scrollbar-thumb:hover{background:#ffd600!important}
+
+/* ORYN v3.4: hide firmware advisory visually only */
+header [class*="text-amber"],header [class*="text-orange"]{display:none!important}
+
+/* =======================================================================
+   ORYN FINAL READABILITY PATCH
+   Keeps ORYN branding and black/yellow/white theme.
+   Fixes unreadable text and removes the unwanted bottom horizontal line.
+   ======================================================================= */
+
+:root,
+html,
+html.dark,
+body,
+#root {
+  color-scheme: dark !important;
+  --background: 0 0% 2% !important;
+  --foreground: 0 0% 98% !important;
+  --card: 0 0% 6% !important;
+  --card-foreground: 0 0% 98% !important;
+  --popover: 0 0% 6% !important;
+  --popover-foreground: 0 0% 98% !important;
+  --primary: 48 100% 50% !important;
+  --primary-foreground: 0 0% 2% !important;
+  --secondary: 0 0% 10% !important;
+  --secondary-foreground: 0 0% 98% !important;
+  --muted: 0 0% 11% !important;
+  --muted-foreground: 0 0% 72% !important;
+  --accent: 48 100% 50% !important;
+  --accent-foreground: 0 0% 2% !important;
+  --border: 0 0% 20% !important;
+  --input: 0 0% 14% !important;
+  --ring: 48 100% 50% !important;
+}
+
+html, body, #root, main {
+  background: #050505 !important;
+  color: #f7f7f7 !important;
+}
+
+header,
+[class*="sticky"][class*="top-0"] {
+  background: #080808 !important;
+  color: #ffffff !important;
+  border-color: #202020 !important;
+}
+
+/* Cards / panels / accordions */
+.bg-background,
+[class*="bg-background"] {
+  background: #050505 !important;
+  color: #f7f7f7 !important;
+}
+.bg-card,
+[class*="bg-card"],
+.bg-muted,
+[class*="bg-muted"],
+.bg-secondary,
+[class*="bg-secondary"],
+.bg-popover,
+[class*="bg-popover"] {
+  background: #101010 !important;
+  color: #f7f7f7 !important;
+}
+
+/* Text */
+.text-foreground,
+[class*="text-foreground"],
+.text-card-foreground,
+[class*="text-card-foreground"] {
+  color: #fafafa !important;
+}
+.text-muted-foreground,
+[class*="text-muted-foreground"] {
+  color: #b8b8b8 !important;
+}
+[class*="text-slate-"],
+[class*="text-gray-"],
+[class*="text-zinc-"],
+[class*="text-neutral-"] {
+  color: #c2c2c2 !important;
+}
+h1,h2,h3,h4,h5,h6,label,legend,dt {
+  color: #fafafa !important;
+}
+
+/* Inputs / selects / disabled fields */
+input,
+select,
+textarea,
+[role="combobox"],
+button[role="combobox"] {
+  background: #0b0b0b !important;
+  color: #f8f8f8 !important;
+  border-color: #383838 !important;
+}
+input::placeholder,
+textarea::placeholder {
+  color: #929292 !important;
+  opacity: 1 !important;
+}
+input:disabled,
+select:disabled,
+textarea:disabled,
+[aria-disabled="true"][role="combobox"] {
+  opacity: .72 !important;
+  color: #d0d0d0 !important;
+  -webkit-text-fill-color: #d0d0d0 !important;
+  background: #111 !important;
+  border-color: #303030 !important;
+}
+button:disabled,
+[aria-disabled="true"] {
+  opacity: .58 !important;
+}
+
+/* Previously unreadable light boxes */
+[role="alert"],
+[class*="alert"],
+[class*="Alert"],
+[class*="bg-white"],
+[class*="bg-slate-50"],
+[class*="bg-gray-50"],
+[class*="bg-zinc-50"],
+[class*="bg-neutral-50"] {
+  background: #0b0b0b !important;
+  color: #f4f4f4 !important;
+  border-color: #343434 !important;
+}
+
+/* Yellow ORYN accents */
+.bg-primary,
+[class*="bg-primary"] {
+  background: #ffd600 !important;
+  color: #050505 !important;
+  border-color: #ffd600 !important;
+}
+.text-primary,
+[class*="text-primary"] {
+  color: #ffd600 !important;
+}
+
+/* Bottom navigation */
+nav.fixed.bottom-0 {
+  background: #11161b !important;
+  border: 1px solid #2d3237 !important;
+  box-shadow: 0 14px 40px rgba(0,0,0,.5) !important;
+}
+nav.fixed.bottom-0 a,
+nav.fixed.bottom-0 button {
+  color: #a9afb5 !important;
+}
+nav.fixed.bottom-0 a[aria-current="page"],
+nav.fixed.bottom-0 a[class*="text-primary"] {
+  color: #ffd600 !important;
+  background: rgba(255,214,0,.12) !important;
+}
+
+/* Remove the unwanted full-width line near bottom/footer */
+main > footer,
+body > footer,
+#root > footer,
+.km-brand-footer {
+  border-top: 0 !important;
+  box-shadow: none !important;
+}
+.km-brand-footer {
+  background: transparent !important;
+  color: #b8b8b8 !important;
+}
+.km-brand-footer strong {
+  color: #fff !important;
+}

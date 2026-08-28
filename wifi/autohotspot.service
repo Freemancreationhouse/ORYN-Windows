@@ -1,0 +1,12 @@
+[Unit]
+Description=ORYN Autohotspot
+After=NetworkManager.service
+Before=oryn.service
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+ExecStart=/usr/local/bin/autohotspot
+
+[Install]
+WantedBy=multi-user.target

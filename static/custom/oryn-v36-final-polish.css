@@ -1,0 +1,276 @@
+/* ORYN v3.5 final UI corrections */
+:root{--oryn-brass:#C7A463;--oryn-brass-hi:#DEC07A;--oryn-graphite:#0B0D10;--oryn-panel:#14171B;--oryn-ivory:#E9E0D2;}
+
+/* explicit helper classes are set by JS from the actual html.dark state */
+body.oryn-theme-dark,body.oryn-theme-dark #root,body.oryn-theme-dark main{background:#0B0D10!important;color:#F3F0EA!important}
+body.oryn-theme-dark{background:radial-gradient(circle at 12% -8%,rgba(199,164,99,.08),transparent 28rem),#0B0D10!important}
+body.oryn-theme-dark header{background:rgba(11,13,16,.97)!important;border-color:#2D3136!important}
+body.oryn-theme-dark [class*="bg-card"],body.oryn-theme-dark [class*="bg-popover"],body.oryn-theme-dark [class*="rounded-lg"][class*="border"],body.oryn-theme-dark [class*="rounded-xl"][class*="border"]{background:#14171B!important;color:#F3F0EA!important;border-color:#30343A!important}
+body.oryn-theme-dark input,body.oryn-theme-dark select,body.oryn-theme-dark textarea,body.oryn-theme-dark [role="combobox"]{background:#0F1215!important;color:#F3F0EA!important;border-color:#34383E!important}
+body.oryn-theme-dark .text-muted-foreground,body.oryn-theme-dark [class*="text-muted-foreground"]{color:#AAA8A2!important}
+
+body.oryn-theme-light,body.oryn-theme-light #root,body.oryn-theme-light main{background:#F4F0E8!important;color:#17191C!important}
+body.oryn-theme-light{background:linear-gradient(180deg,#F7F3EC,#EFE9DF)!important}
+body.oryn-theme-light header{background:rgba(250,247,241,.98)!important;border-color:#D6CEC1!important}
+body.oryn-theme-light [class*="bg-card"],body.oryn-theme-light [class*="bg-popover"],body.oryn-theme-light [class*="rounded-lg"][class*="border"],body.oryn-theme-light [class*="rounded-xl"][class*="border"],body.oryn-theme-light [class*="rounded-2xl"][class*="border"]{background:#FCFAF6!important;color:#17191C!important;border-color:#D8D0C3!important}
+body.oryn-theme-light input,body.oryn-theme-light select,body.oryn-theme-light textarea,body.oryn-theme-light [role="combobox"]{background:#FFFDF9!important;color:#17191C!important;border-color:#CFC5B6!important}
+body.oryn-theme-light .text-muted-foreground,body.oryn-theme-light [class*="text-muted-foreground"]{color:#66615A!important}
+body.oryn-theme-light h1,body.oryn-theme-light h2,body.oryn-theme-light h3,body.oryn-theme-light h4,body.oryn-theme-light label{color:#17191C!important}
+body.oryn-theme-light nav.fixed.bottom-0{background:#F8F5EF!important;border-color:#D4CCBF!important}
+body.oryn-theme-light nav.fixed.bottom-0 a{color:#615E59!important}
+
+/* Preview discs remain legible in both modes. */
+.pattern-preview{mix-blend-mode:multiply!important;opacity:1!important}
+body.oryn-theme-dark .pattern-preview{filter:contrast(1.30) brightness(.92)!important}
+body.oryn-theme-light .pattern-preview{filter:contrast(1.38) brightness(.88)!important}
+div:has(>img.pattern-preview){background:radial-gradient(circle at 38% 30%,#F5EEE3,#E7DDCE 58%,#D7CABA)!important;border:1px solid rgba(165,133,77,.72)!important;box-shadow:inset 0 0 0 1px rgba(255,255,255,.38),0 5px 14px rgba(0,0,0,.16)!important}
+
+/* Perimeter panel - preserve base layout, then premiumize all controls. */
+#oryn-perimeter-calibration-card{background:linear-gradient(145deg,#171A1E,#111315)!important;color:#F4F0E9!important;border:1px solid rgba(199,164,99,.45)!important}
+#oryn-perimeter-calibration-card .oryn-pc-title,#oryn-perimeter-calibration-card .oryn-pc-current strong,#oryn-perimeter-calibration-card .oryn-pc-message{color:#DEC07A!important}
+#oryn-perimeter-calibration-card .oryn-pc-note,#oryn-perimeter-calibration-card .oryn-pc-current{background:#1B1E22!important;color:#E4E0D9!important;border-color:#3A3E44!important}
+#oryn-perimeter-calibration-card .oryn-pc-btn{display:inline-flex!important;align-items:center!important;justify-content:center!important;background:#262A2F!important;color:#F7F4EE!important;border:1px solid #555B62!important;min-height:40px!important;padding:9px 12px!important;border-radius:9px!important;font-weight:750!important}
+#oryn-perimeter-calibration-card .oryn-pc-btn:hover:not(:disabled){background:#30353B!important;border-color:#C7A463!important}
+#oryn-perimeter-calibration-card .oryn-pc-btn.primary{background:#C7A463!important;color:#090A0B!important;border-color:#C7A463!important}
+#oryn-perimeter-calibration-card .oryn-pc-btn:disabled{opacity:.42!important}
+#oryn-perimeter-calibration-card .oryn-pc-input{background:#0D0F12!important;color:#FFF!important;border:1px solid #4A4F56!important}
+#oryn-perimeter-calibration-card .oryn-pc-badge.calibrated{background:#C7A463!important;color:#090A0B!important;border-color:#C7A463!important}
+
+/* Pattern Forge launcher is deliberately obvious but branded. */
+#oryn-pattern-forge-launch{display:inline-flex!important;align-items:center!important;gap:8px!important;height:42px!important;padding:0 15px!important;border-radius:10px!important;border:1px solid #D1B275!important;background:linear-gradient(135deg,#C7A463,#A98143)!important;color:#101113!important;font-size:13px!important;font-weight:800!important;box-shadow:0 5px 15px rgba(0,0,0,.18)!important;cursor:pointer!important}
+#oryn-pattern-forge-launch:hover{filter:brightness(1.06)!important}
+
+/* Forge modal (uses existing v3.4 classes) */
+#oryn-forge-overlay{position:fixed;z-index:99999;inset:0;background:rgba(3,4,5,.84);backdrop-filter:blur(8px);display:grid;place-items:center;padding:20px}
+#oryn-forge-modal{width:min(1120px,96vw);max-height:94vh;overflow:hidden;border-radius:20px;border:1px solid rgba(199,164,99,.42);background:#0E1114;color:#F3F0EA;box-shadow:0 30px 90px rgba(0,0,0,.55)}
+.oryn-forge-head{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:18px 22px;border-bottom:1px solid #292D32}.oryn-forge-title{font-size:19px;font-weight:800}.oryn-forge-sub{color:#92938F;font-size:11px;margin-top:3px}.oryn-forge-close{width:36px;height:36px;border-radius:9px;border:1px solid #333;background:#15171A;color:#fff;font-size:20px;cursor:pointer}.oryn-forge-grid{display:grid;grid-template-columns:360px 1fr;min-height:580px;max-height:calc(94vh - 74px)}.oryn-forge-controls{overflow-y:auto;padding:20px;border-right:1px solid #292D32}.oryn-forge-preview{min-width:0;display:flex;flex-direction:column;padding:20px}.oryn-forge-drop{display:block;padding:16px;border:1px dashed #4A4E53;border-radius:13px;background:#14171A;cursor:pointer}.oryn-forge-drop:hover{border-color:#C7A463}.oryn-forge-drop b{display:block;font-size:13px}.oryn-forge-drop small{display:block;color:#8F918F;margin-top:4px}.oryn-forge-file{margin-top:8px;color:#DEC07A;font-size:11px;word-break:break-all}.oryn-forge-field{margin-top:15px}.oryn-forge-field label{display:flex;justify-content:space-between;gap:10px;color:#D8D5D0;font-size:12px;font-weight:650;margin-bottom:7px}.oryn-forge-field label span{color:#8F918F;font-weight:500}.oryn-forge-field input[type="text"]{width:100%;height:39px;border:1px solid #353A40;border-radius:9px;background:#0B0D10;color:#fff;padding:0 11px}.oryn-forge-field input[type="range"]{width:100%;accent-color:#C7A463}.oryn-forge-toggle{display:flex;align-items:center;gap:10px;margin-top:14px;padding:10px;border:1px solid #30343A;border-radius:10px;background:#14171A}.oryn-forge-toggle input{accent-color:#C7A463}.oryn-forge-note{margin-top:15px;padding:11px;border-left:3px solid #C7A463;background:#16181A;color:#B5B2AC;font-size:11px;line-height:1.45}.oryn-forge-actions{display:flex;gap:9px;margin-top:16px}.oryn-forge-btn{min-height:41px;border-radius:9px;border:1px solid #3A3E44;background:#17191C;color:#fff;padding:0 13px;font-weight:750;cursor:pointer}.oryn-forge-btn.primary{background:#C7A463;border-color:#C7A463;color:#090909}.oryn-forge-btn:disabled{opacity:.42;cursor:not-allowed}.oryn-forge-canvas-wrap{flex:1;min-height:430px;border:1px solid #2D3136;border-radius:15px;background:#111418;display:grid;place-items:center;overflow:hidden;padding:14px}.oryn-forge-disc{width:min(520px,72vh);aspect-ratio:1;border-radius:50%;background:radial-gradient(circle at 38% 30%,#F5EEE3,#E7DDCE 58%,#D7CABA);border:1px solid rgba(199,164,99,.70);display:grid;place-items:center}.oryn-forge-disc svg{width:100%;height:100%}#oryn-forge-route{fill:none;stroke:#151515;stroke-width:1.25;vector-effect:non-scaling-stroke;stroke-linecap:round;stroke-linejoin:round}.oryn-forge-empty{color:#777B79;text-align:center;font-size:13px;line-height:1.5}.oryn-forge-stats{display:flex;flex-wrap:wrap;gap:7px;margin-top:12px}.oryn-forge-chip{padding:5px 8px;border:1px solid #353A40;border-radius:999px;color:#B9B7B2;background:#15181B;font-size:10px}.oryn-forge-status{min-height:18px;margin-top:10px;color:#DEC07A;font-size:11px}.oryn-forge-error{color:#FF6A6A!important}
+
+/* explicit delete action */
+#oryn-delete-pattern{display:inline-flex;align-items:center;justify-content:center;gap:7px;min-height:42px;padding:0 14px;border-radius:10px;border:1px solid #A9494E;background:rgba(130,35,40,.16);color:#F09296;font-weight:800;cursor:pointer}
+#oryn-delete-pattern:hover{background:rgba(150,38,45,.26);border-color:#C55A60}
+
+/* footer */
+#oryn-v35-footer{margin:52px auto 18px;max-width:760px;padding:15px 18px;text-align:center;color:#918F89;font-size:12px;letter-spacing:.03em}
+body.oryn-theme-light #oryn-v35-footer{color:#66615A}#oryn-v35-footer strong{color:inherit;font-weight:800}
+@media(max-width:800px){.oryn-forge-grid{grid-template-columns:1fr;overflow-y:auto}.oryn-forge-controls{border-right:0;border-bottom:1px solid #292D32}.oryn-forge-canvas-wrap{min-height:330px}}
+
+
+/* ===============================================================
+   ORYN v3.6 FINAL POLISH
+   Keeps the locked v3.5 theme; fixes Forge usability, Delete and footer.
+   =============================================================== */
+
+/* Pattern Forge must fit the actual Windows app viewport. */
+#oryn-forge-overlay {
+  overflow: hidden !important;
+  align-items: center !important;
+}
+#oryn-forge-modal {
+  height: min(820px, 92vh) !important;
+  max-height: 92vh !important;
+  display: flex !important;
+  flex-direction: column !important;
+}
+.oryn-forge-grid {
+  flex: 1 1 auto !important;
+  min-height: 0 !important;
+  height: auto !important;
+  max-height: none !important;
+  overflow: hidden !important;
+}
+.oryn-forge-controls {
+  min-height: 0 !important;
+  height: 100% !important;
+  max-height: 100% !important;
+  overflow-y: auto !important;
+  overflow-x: hidden !important;
+  overscroll-behavior: contain !important;
+  scrollbar-gutter: stable !important;
+  padding-bottom: 48px !important;
+}
+.oryn-forge-controls::-webkit-scrollbar { width: 10px; }
+.oryn-forge-controls::-webkit-scrollbar-track { background:#101317; }
+.oryn-forge-controls::-webkit-scrollbar-thumb {
+  background:#4B4D4A;
+  border-radius:99px;
+  border:2px solid #101317;
+}
+.oryn-forge-controls::-webkit-scrollbar-thumb:hover { background:#C7A463; }
+
+.oryn-forge-preview {
+  min-height: 0 !important;
+  overflow-y: auto !important;
+  overscroll-behavior: contain !important;
+}
+
+/* Original artwork preview. */
+.oryn-forge-source-wrap {
+  flex: 0 0 auto;
+  margin-bottom: 12px;
+  padding: 10px;
+  border: 1px solid #30343A;
+  border-radius: 13px;
+  background: #14171A;
+}
+.oryn-forge-source-head {
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:10px;
+  margin-bottom:8px;
+}
+.oryn-forge-source-head b {
+  font-size:11px;
+  letter-spacing:.12em;
+  color:#A8A59E;
+}
+.oryn-forge-source-head span {
+  max-width:55%;
+  overflow:hidden;
+  white-space:nowrap;
+  text-overflow:ellipsis;
+  font-size:10px;
+  color:#C7A463;
+}
+.oryn-forge-source-box {
+  height: 150px;
+  display:grid;
+  place-items:center;
+  overflow:hidden;
+  border-radius:10px;
+  background:
+    linear-gradient(45deg,#E6DED1 25%,transparent 25%) 0 0/16px 16px,
+    linear-gradient(-45deg,#E6DED1 25%,transparent 25%) 0 8px/16px 16px,
+    linear-gradient(45deg,transparent 75%,#E6DED1 75%) 8px -8px/16px 16px,
+    linear-gradient(-45deg,transparent 75%,#E6DED1 75%) -8px 0/16px 16px,
+    #F1EADF;
+}
+.oryn-forge-source-box img {
+  width:100%;
+  height:100%;
+  object-fit:contain;
+  display:block;
+}
+.oryn-forge-source-placeholder {
+  color:#737672;
+  text-align:center;
+  font-size:12px;
+  padding:20px;
+}
+.oryn-forge-canvas-wrap {
+  min-height: 340px !important;
+}
+
+/* Make final Generate/Save area sticky at bottom of left scroll column.
+   The controls above still scroll normally. */
+.oryn-forge-actions {
+  position: sticky !important;
+  bottom: -1px !important;
+  z-index: 5 !important;
+  margin: 18px -4px 0 !important;
+  padding: 10px 4px 4px !important;
+  background: linear-gradient(180deg,rgba(14,17,20,0),#0E1114 28%) !important;
+}
+
+/* Delete button is visible beside the selected pattern Play/Run action. */
+#oryn-delete-pattern {
+  min-width: 44px !important;
+  min-height: 48px !important;
+  padding: 0 14px !important;
+  flex: 0 0 auto !important;
+  font-size: 12px !important;
+}
+body.oryn-theme-light #oryn-delete-pattern {
+  color:#9B3036 !important;
+  border-color:#C96B70 !important;
+  background:#FFF2F2 !important;
+}
+
+/* One single real footer, at bottom of page content only. */
+.km-brand-footer {
+  display:none !important;
+}
+#oryn-v36-footer {
+  width:100%;
+  max-width:900px;
+  margin: 56px auto 10px;
+  padding: 18px 16px 10px;
+  text-align:center;
+  border-top:1px solid rgba(199,164,99,.20);
+  color:#918F89;
+  font-size:12px;
+  letter-spacing:.025em;
+}
+#oryn-v36-footer strong {
+  color:inherit;
+  font-weight:800;
+}
+body.oryn-theme-light #oryn-v36-footer {
+  color:#66615A;
+  border-top-color:rgba(123,98,57,.24);
+}
+
+/* Keep footer behind/far above fixed bottom navigation. */
+main #oryn-v36-footer {
+  margin-bottom: 36px;
+}
+
+@media(max-width:800px) {
+  #oryn-forge-modal {
+    height: 96vh !important;
+    max-height:96vh !important;
+  }
+  .oryn-forge-grid {
+    display:block !important;
+    overflow-y:auto !important;
+  }
+  .oryn-forge-controls,
+  .oryn-forge-preview {
+    height:auto !important;
+    max-height:none !important;
+    overflow:visible !important;
+  }
+  .oryn-forge-source-box { height:130px; }
+}
+
+/* ===============================================================
+   ORYN Pattern Forge Pro Production V10.2
+   Full source preview + professional raster mode controls.
+   =============================================================== */
+.oryn-forge-source-box {
+  height: 240px !important;
+  min-height: 240px !important;
+  padding: 10px !important;
+  overflow: hidden !important;
+}
+.oryn-forge-source-box .oryn-forge-source-image,
+.oryn-forge-source-box > img {
+  width: 100% !important;
+  height: 100% !important;
+  max-width: 100% !important;
+  max-height: 100% !important;
+  object-fit: contain !important;
+  object-position: center center !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  border-radius: 6px !important;
+}
+.oryn-forge-select {
+  width:100% !important;
+  min-height:40px !important;
+  border-radius:9px !important;
+  border:1px solid #353A40 !important;
+  background:#0B0D10 !important;
+  color:#fff !important;
+  padding:0 10px !important;
+}
+.oryn-forge-help {
+  display:block;
+  color:#858883;
+  font-size:10px;
+  line-height:1.35;
+  margin-top:6px;
+}
+@media(max-width:800px){
+  .oryn-forge-source-box{height:200px !important;min-height:200px !important;}
+}

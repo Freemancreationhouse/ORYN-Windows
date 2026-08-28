@@ -1,0 +1,15 @@
+ORYN V9 — DUNE-WEAVER-COMPATIBLE COUPLED THETA-RHO MOTION CORE
+Build: UC-DUNE-MOTION-V9-20260827-1
+
+CORE MOTION FIXES:
+- Restores original Dune Weaver theta->rho mechanical coupling compensation
+- Uses saved 360° and perimeter values as geometry; no fixed calibration constants
+- Coupling automatically follows live X/Y steps-per-unit, gear ratio and learned rho direction
+- One coordinated G91 G1 X/Y motor block per THR segment (no split-axis $J motion)
+- Connection transaction lock prevents UI/status readers stealing FluidNC 'ok'
+- No per-point Idle wait: GRBL planner remains buffered and smooth
+- UI speed is a hard feed ceiling; ORYN never silently amplifies Speed 60 to F140+
+- First THR point physically completes before preview/progress begins
+- G90 is restored after every pattern
+- V7.3 GRBL-compatible $100/$101/$110/$111/$120/$121 hardware-profile fallback retained
+- Existing ORYN UI, branding, logos, HOME, terminal, hardware profile, calibrations and patterns preserved

@@ -1,0 +1,14 @@
+{
+  "profile_version": 9,
+  "controller_family": "grbl_fluidnc",
+  "mechanism": "dune_weaver_coupled_theta_rho",
+  "theta_axis": "X",
+  "rho_axis": "Y",
+  "executor": "coordinated_relative_g1_with_mechanical_coupling",
+  "theta_revolution_units": "CALIBRATE_IN_UI",
+  "rho_travel_units": "CALIBRATE_IN_UI",
+  "rho_direction": "LEARNED_FROM_PERIMETER_CALIBRATION",
+  "coupling": "X_steps_per_unit / (gear_ratio * Y_steps_per_unit)",
+  "speed_policy": "UI speed is the feed ceiling and is never amplified",
+  "notes": "Driver/microstep settings come from Machine Profile / FluidNC. Exact 360 and Center-to-Perimeter calibrations remain the physical geometry. Set ORYN_KINEMATICS=independent only for a genuinely independent polar mechanism."
+}

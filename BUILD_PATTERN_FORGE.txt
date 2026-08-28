@@ -1,0 +1,2 @@
+Pattern Forge Build: PF-PRO-V10.4.1-20260828-1
+Motion Baseline: UC-DUNE-MOTION-V9-20260827-1 (LOCKED / unchanged)

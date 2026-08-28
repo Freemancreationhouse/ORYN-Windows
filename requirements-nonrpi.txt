@@ -1,0 +1,31 @@
+# Development dependencies for non-Raspberry Pi platforms (Windows, Linux, macOS)
+# Use this for development, testing, and running the web interface without hardware
+#
+# Install with: pip install -r requirements-nonrpi.txt
+#
+# NOTE: This excludes RPi-specific GPIO/LED libraries. The application will run
+# but ORYN LED features will be disabled (graceful degradation).
+# For full hardware support on Raspberry Pi, use: pip install -r requirements.txt
+
+pyserial>=3.5
+tqdm>=4.65.0
+paho-mqtt>=1.6.1
+python-dotenv>=1.0.0
+websocket-client>=1.6.1
+fastapi>=0.100.0
+uvicorn>=0.23.0
+pydantic>=2.0.0
+jinja2>=3.1.2
+aiofiles>=23.1.0
+python-multipart>=0.0.6
+websockets>=11.0.3  # Required for FastAPI WebSocket support
+requests>=2.31.0
+Pillow
+aiohttp
+zeroconf>=0.131.0  # ORYN Pattern Forge
+numpy>=2.0
+svgpathtools>=1.6
+ezdxf>=1.3
+
+# ORYN Windows desktop shell
+pywebview>=5.3,<6

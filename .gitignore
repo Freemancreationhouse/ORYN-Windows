@@ -1,0 +1,57 @@
+gcode_files/
+__pycache__/
+*.pyc
+*.pyo
+.env
+.idea
+# Ignore state and data JSON files, but not package.json
+state.json
+settings.json
+playlists.json
+metadata_cache.json
+tsconfig.json
+*.jsonl
+!package.json
+!package-lock.json
+
+# Touch app config files
+kinetiq-motion-touch/*.json
+.venv/
+patterns/cached_svg/
+patterns/cached_images/custom_*
+# macOS files
+.DS_Store
+# Node.js and build files
+node_modules/
+.vite/
+*.log
+*.png
+# Custom branding assets (user uploads)
+static/custom/*
+!static/custom/.gitkeep
+.claude/
+.planning/
+.coverage
+# Frontend test artifacts
+frontend/coverage/
+frontend/playwright-report/
+frontend/test-results/
+
+# ORYN runtime UI assets MUST be committed for Raspberry Pi/GitHub installs.
+# These exceptions preserve the exact locked desktop UI on the Pi.
+!static/*.png
+!static/*.jpg
+!static/*.jpeg
+!static/custom/
+!static/custom/.gitkeep
+!static/custom/*.css
+!static/custom/*.js
+!static/custom/*.png
+!static/custom/*.jpg
+!static/custom/*.jpeg
+
+# Local Windows build products are not required by Raspberry Pi runtime.
+.build-venv/
+/build/
+/dist/
+/release/

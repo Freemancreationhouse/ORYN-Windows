@@ -1,0 +1,810 @@
+"""
+ORYN WiFi management.
+
+Linux / Raspberry Pi:
+    NetworkManager via nmcli (existing locked behavior preserved).
+
+Windows:
+    Native Windows WLAN management via netsh.
+    This allows the locked ORYN desktop application to scan, save,
+    connect to, and forget WiFi networks instead of trying to execute
+    Linux-only nmcli.
+"""
+
+import subprocess
+import shutil
+import os
+import logging
+import asyncio
+import socket
+import tempfile
+import html
+import re
+import time
+
+logger = logging.getLogger(__name__)
+
+HOTSPOT_CON_NAME = "ORYNMotion-Hotspot"
+IS_WINDOWS = os.name == "nt"
+NMCLI = shutil.which("nmcli") or "/usr/bin/nmcli"
+
+
+# ---------------------------------------------------------------------------
+# Common command helpers
+# ---------------------------------------------------------------------------
+
+def _run(cmd: list[str], timeout: int = 30) -> subprocess.CompletedProcess:
+    """Run a command without opening a console window on Windows."""
+    kwargs = {
+        "capture_output": True,
+        "text": True,
+        "timeout": timeout,
+        "errors": "replace",
+    }
+    if IS_WINDOWS:
+        kwargs["creationflags"] = getattr(subprocess, "CREATE_NO_WINDOW", 0)
+        # Windows command output can use the current ANSI code page.
+        kwargs["encoding"] = "utf-8"
+    return subprocess.run(cmd, **kwargs)
+
+
+def run_nmcli(*args: str, timeout: int = 30) -> str:
+    """Run nmcli and return stdout (Linux/Raspberry Pi only)."""
+    cmd = [NMCLI] + list(args)
+    logger.debug("Running nmcli: %s", " ".join(cmd))
+    result = _run(cmd, timeout=timeout)
+
+    if result.returncode != 0:
+        logger.warning("nmcli failed (rc=%s): %s", result.returncode, " ".join(cmd))
+        if result.stderr:
+            logger.warning("  stderr: %s", result.stderr.strip())
+    return result.stdout
+
+
+def run_nmcli_check(*args: str, timeout: int = 30) -> subprocess.CompletedProcess:
+    """Run nmcli and return CompletedProcess (Linux/Raspberry Pi only)."""
+    cmd = [NMCLI] + list(args)
+    logger.debug("Running nmcli: %s", " ".join(cmd))
+    result = _run(cmd, timeout=timeout)
+
+    if result.returncode != 0:
+        logger.warning("nmcli failed (rc=%s): %s", result.returncode, " ".join(cmd))
+        if result.stderr:
+            logger.warning("  stderr: %s", result.stderr.strip())
+    return result
+
+
+def _run_netsh(*args: str, timeout: int = 30) -> subprocess.CompletedProcess:
+    cmd = ["netsh"] + list(args)
+    logger.debug("Running netsh: %s", " ".join(cmd))
+    # Do not force UTF-8 for netsh; decode bytes using Windows preferred codepage.
+    kwargs = {
+        "capture_output": True,
+        "timeout": timeout,
+        "creationflags": getattr(subprocess, "CREATE_NO_WINDOW", 0),
+    }
+    result = subprocess.run(cmd, **kwargs)
+
+    def decode(b):
+        if not isinstance(b, (bytes, bytearray)):
+            return b or ""
+        for enc in ("utf-8", "cp1252", "mbcs"):
+            try:
+                return b.decode(enc)
+            except Exception:
+                pass
+        return b.decode(errors="replace")
+
+    result.stdout = decode(result.stdout)
+    result.stderr = decode(result.stderr)
+
+    if result.returncode != 0:
+        logger.warning("netsh failed (rc=%s): %s", result.returncode, " ".join(cmd))
+        if result.stderr:
+            logger.warning("  stderr: %s", result.stderr.strip())
+    return result
+
+
+# ---------------------------------------------------------------------------
+# Windows WLAN helpers
+# ---------------------------------------------------------------------------
+
+def _windows_interfaces_text() -> str:
+    try:
+        return _run_netsh("wlan", "show", "interfaces", timeout=10).stdout
+    except Exception as e:
+        logger.warning("Windows WiFi interface query failed: %s", e)
+        return ""
+
+
+def _windows_current_ssid() -> str:
+    output = _windows_interfaces_text()
+    # Match SSID but not BSSID.
+    m = re.search(r"(?im)^\s*SSID\s*:\s*(.+?)\s*$", output)
+    return m.group(1).strip() if m else ""
+
+
+def _windows_current_signal() -> int:
+    output = _windows_interfaces_text()
+    m = re.search(r"(?im)^\s*Signal\s*:\s*(\d+)%", output)
+    return int(m.group(1)) if m else 0
+
+
+def _windows_is_connected() -> bool:
+    output = _windows_interfaces_text()
+    m = re.search(r"(?im)^\s*State\s*:\s*(.+?)\s*$", output)
+    return bool(m and "connected" in m.group(1).strip().lower())
+
+
+def _windows_security_name(authentication: str) -> str:
+    auth = (authentication or "").strip()
+    if not auth:
+        return "Open"
+    low = auth.lower()
+    if "open" in low:
+        return "Open"
+    return auth
+
+
+def _windows_saved_profiles() -> list[str]:
+    try:
+        output = _run_netsh("wlan", "show", "profiles", timeout=10).stdout
+    except Exception as e:
+        logger.warning("Windows WiFi saved-profile query failed: %s", e)
+        return []
+
+    profiles = []
+    # English Windows: "All User Profile : SSID"
+    for line in output.splitlines():
+        if ":" not in line:
+            continue
+        left, right = line.split(":", 1)
+        label = left.strip().lower()
+        if "profile" in label and right.strip():
+            profiles.append(right.strip())
+
+    # Remove duplicates while preserving order.
+    seen = set()
+    return [p for p in profiles if not (p in seen or seen.add(p))]
+
+
+def _windows_profile_xml(ssid: str, password: str) -> str:
+    """Create a Windows WLAN profile for open or WPA/WPA2 personal networks."""
+    ssid_xml = html.escape(ssid, quote=True)
+    if password:
+        password_xml = html.escape(password, quote=True)
+        security = f"""
+            <security>
+                <authEncryption>
+                    <authentication>WPA2PSK</authentication>
+                    <encryption>AES</encryption>
+                    <useOneX>false</useOneX>
+                </authEncryption>
+                <sharedKey>
+                    <keyType>passPhrase</keyType>
+                    <protected>false</protected>
+                    <keyMaterial>{password_xml}</keyMaterial>
+                </sharedKey>
+            </security>"""
+    else:
+        security = """
+            <security>
+                <authEncryption>
+                    <authentication>open</authentication>
+                    <encryption>none</encryption>
+                    <useOneX>false</useOneX>
+                </authEncryption>
+            </security>"""
+
+    return f"""<?xml version="1.0"?>
+<WLANProfile xmlns="http://www.microsoft.com/networking/WLAN/profile/v1">
+    <name>{ssid_xml}</name>
+    <SSIDConfig>
+        <SSID><name>{ssid_xml}</name></SSID>
+        <nonBroadcast>false</nonBroadcast>
+    </SSIDConfig>
+    <connectionType>ESS</connectionType>
+    <connectionMode>auto</connectionMode>
+    <MSM>{security}
+    </MSM>
+</WLANProfile>
+"""
+
+
+def _windows_add_profile(ssid: str, password: str) -> subprocess.CompletedProcess:
+    xml = _windows_profile_xml(ssid, password)
+    fd, path = tempfile.mkstemp(prefix="oryn_wifi_", suffix=".xml")
+    os.close(fd)
+    try:
+        PathLike = __import__("pathlib").Path
+        PathLike(path).write_text(xml, encoding="utf-8")
+        return _run_netsh("wlan", "add", "profile", f"filename={path}", "user=current", timeout=15)
+    finally:
+        try:
+            os.remove(path)
+        except OSError:
+            pass
+
+
+def _windows_get_ipv4() -> str:
+    """Return a useful non-loopback local IPv4 address."""
+    try:
+        # UDP connect does not send traffic; it lets Windows choose the active adapter.
+        s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        try:
+            s.connect(("8.8.8.8", 80))
+            ip = s.getsockname()[0]
+        finally:
+            s.close()
+        if ip and not ip.startswith("127."):
+            return ip
+    except Exception:
+        pass
+    return ""
+
+
+# ---------------------------------------------------------------------------
+# Public API used by the existing locked ORYN WiFi router
+# ---------------------------------------------------------------------------
+
+def get_wifi_mode() -> str:
+    if IS_WINDOWS:
+        return "client" if _windows_is_connected() else "disconnected"
+
+    try:
+        output = run_nmcli("-t", "-f", "NAME,TYPE,DEVICE", "con", "show", "--active")
+        logger.info("Active connections: %s", output.strip())
+        for line in output.strip().splitlines():
+            parts = line.split(":")
+            if len(parts) >= 3 and parts[2] == "wlan0":
+                con_name = parts[0]
+                if con_name == HOTSPOT_CON_NAME:
+                    return "hotspot"
+                return "client"
+    except (subprocess.TimeoutExpired, Exception) as e:
+        logger.warning("Error detecting WiFi mode: %s", e)
+    return "unknown"
+
+
+def get_current_ssid() -> str:
+    if IS_WINDOWS:
+        return _windows_current_ssid()
+
+    try:
+        output = run_nmcli("-t", "-f", "NAME,TYPE,DEVICE", "con", "show", "--active")
+        for line in output.strip().splitlines():
+            parts = line.split(":")
+            if len(parts) >= 3 and parts[2] == "wlan0":
+                con_name = parts[0]
+                if con_name and con_name != HOTSPOT_CON_NAME:
+                    return con_name
+    except (subprocess.TimeoutExpired, Exception) as e:
+        logger.debug("Error getting SSID: %s", e)
+    return ""
+
+
+def get_current_ip() -> str:
+    if IS_WINDOWS:
+        return _windows_get_ipv4()
+
+    try:
+        output = run_nmcli("-t", "-f", "IP4.ADDRESS", "dev", "show", "wlan0")
+        for line in output.strip().splitlines():
+            if "IP4.ADDRESS" in line:
+                addr = line.split(":", 1)[1] if ":" in line else ""
+                if addr:
+                    return addr.split("/")[0]
+    except (subprocess.TimeoutExpired, Exception) as e:
+        logger.debug("Error getting IP: %s", e)
+    return ""
+
+
+def get_hostname() -> str:
+    if IS_WINDOWS:
+        return socket.gethostname() or "oryn"
+
+    try:
+        output = run_nmcli("general", "hostname")
+        name = output.strip()
+        if name:
+            return name
+    except Exception:
+        pass
+    return "kinetiqmotion"
+
+
+def get_wifi_status() -> dict:
+    return {
+        "mode": get_wifi_mode(),
+        "ssid": get_current_ssid(),
+        "ip": get_current_ip(),
+        "hostname": get_hostname(),
+    }
+
+
+def scan_networks() -> list[dict]:
+    """Scan available WiFi networks on Windows or Raspberry Pi."""
+    if IS_WINDOWS:
+        try:
+            result = _run_netsh("wlan", "show", "networks", "mode=bssid", timeout=15)
+        except (subprocess.TimeoutExpired, Exception) as e:
+            logger.error("Windows WiFi scan failed: %s", e)
+            return []
+
+        output = result.stdout
+        saved_ssids = {c["ssid"] for c in get_saved_connections()}
+        active_ssid = get_current_ssid()
+
+        networks = []
+        current = None
+
+        for raw in output.splitlines():
+            line = raw.rstrip()
+            m_ssid = re.match(r"^\s*SSID\s+\d+\s*:\s*(.*)$", line, re.I)
+            if m_ssid:
+                if current and current.get("ssid"):
+                    networks.append(current)
+                ssid = m_ssid.group(1).strip()
+                current = {
+                    "ssid": ssid,
+                    "signal": 0,
+                    "security": "Open",
+                    "saved": ssid in saved_ssids,
+                    "active": ssid == active_ssid,
+                }
+                continue
+
+            if current is None:
+                continue
+
+            m_auth = re.match(r"^\s*Authentication\s*:\s*(.*)$", line, re.I)
+            if m_auth:
+                current["security"] = _windows_security_name(m_auth.group(1))
+                continue
+
+            m_signal = re.match(r"^\s*Signal\s*:\s*(\d+)%", line, re.I)
+            if m_signal:
+                # Multiple BSSIDs may exist. Keep strongest signal.
+                current["signal"] = max(current["signal"], int(m_signal.group(1)))
+
+        if current and current.get("ssid"):
+            networks.append(current)
+
+        # De-duplicate SSIDs while retaining strongest result.
+        by_ssid = {}
+        for net in networks:
+            ssid = net["ssid"]
+            if not ssid:
+                continue
+            old = by_ssid.get(ssid)
+            if old is None or net["signal"] > old["signal"]:
+                by_ssid[ssid] = net
+
+        result_list = list(by_ssid.values())
+        result_list.sort(key=lambda n: n["signal"], reverse=True)
+        logger.info("Windows WiFi scan found %d network(s)", len(result_list))
+        return result_list
+
+    # Existing Raspberry Pi behavior
+    try:
+        run_nmcli("dev", "wifi", "rescan", "ifname", "wlan0")
+    except Exception:
+        pass
+
+    time.sleep(2)
+
+    try:
+        output = run_nmcli("-t", "-f", "SSID,SIGNAL,SECURITY,ACTIVE", "dev", "wifi", "list", "ifname", "wlan0")
+    except subprocess.TimeoutExpired:
+        logger.error("WiFi scan timed out")
+        return []
+
+    saved = get_saved_connections()
+    saved_ssids = {c["ssid"] for c in saved}
+
+    networks = []
+    seen_ssids = set()
+    for line in output.strip().splitlines():
+        if not line.strip():
+            continue
+        parts = line.rsplit(":", 3)
+        if len(parts) < 4:
+            continue
+        ssid = parts[0].strip()
+        if not ssid or ssid in seen_ssids:
+            continue
+        seen_ssids.add(ssid)
+        try:
+            signal = int(parts[1])
+        except (ValueError, IndexError):
+            signal = 0
+        security = parts[2] if len(parts) > 2 else ""
+        active = parts[3].strip().lower() == "yes" if len(parts) > 3 else False
+        networks.append({
+            "ssid": ssid,
+            "signal": signal,
+            "security": security if security and security != "--" else "Open",
+            "saved": ssid in saved_ssids,
+            "active": active,
+        })
+
+    networks.sort(key=lambda n: n["signal"], reverse=True)
+    return networks
+
+
+def get_saved_connections() -> list[dict]:
+    if IS_WINDOWS:
+        return [{"name": p, "ssid": p} for p in _windows_saved_profiles()]
+
+    try:
+        output = run_nmcli("-t", "-f", "NAME,TYPE", "con", "show")
+    except subprocess.TimeoutExpired:
+        return []
+
+    connections = []
+    for line in output.strip().splitlines():
+        if "wireless" not in line:
+            continue
+        name = line.split(":")[0]
+        if name == HOTSPOT_CON_NAME:
+            continue
+        try:
+            detail = run_nmcli("-t", "-f", "802-11-wireless.ssid", "con", "show", name)
+            ssid = ""
+            for detail_line in detail.strip().splitlines():
+                if "802-11-wireless.ssid" in detail_line:
+                    ssid = detail_line.split(":", 1)[1] if ":" in detail_line else name
+                    break
+            if not ssid:
+                ssid = name
+        except Exception:
+            ssid = name
+        connections.append({"name": name, "ssid": ssid})
+    return connections
+
+
+async def connect_to_network(ssid: str, password: str) -> dict:
+    if IS_WINDOWS:
+        try:
+            saved = {c["ssid"] for c in get_saved_connections()}
+
+            # If credentials were provided, replace/create the profile.
+            # If the network is already saved and password is blank, use it as-is.
+            if password or ssid not in saved:
+                added = _windows_add_profile(ssid, password)
+                if added.returncode != 0:
+                    msg = (added.stderr or added.stdout or "Failed to save WiFi profile").strip()
+                    return {"success": False, "message": msg}
+
+            result = _run_netsh("wlan", "connect", f"name={ssid}", f"ssid={ssid}", timeout=20)
+            if result.returncode != 0:
+                msg = (result.stderr or result.stdout or "Failed to connect").strip()
+                return {"success": False, "message": msg}
+
+            # Give Windows a short moment to associate and confirm if possible.
+            for _ in range(12):
+                await asyncio.sleep(0.5)
+                if get_current_ssid() == ssid and _windows_is_connected():
+                    return {"success": True, "message": f"Connected to '{ssid}'."}
+
+            # netsh accepted the request; Windows may still be associating.
+            return {"success": True, "message": f"Connection request sent for '{ssid}'."}
+        except subprocess.TimeoutExpired:
+            return {"success": False, "message": "Connection timed out"}
+        except Exception as e:
+            logger.error("Windows WiFi connect error: %s", e)
+            return {"success": False, "message": str(e)}
+
+    # Raspberry Pi / Linux:
+    # Stage new credentials in a temporary NetworkManager connection first.
+    # Existing known networks are preserved until the new connection succeeds.
+    ssid = (ssid or "").strip()
+    if not ssid:
+        return {"success": False, "message": "SSID is required"}
+
+    # If this is already a saved network and the user supplied no new password,
+    # simply activate the existing profile. This avoids unnecessarily replacing
+    # known-good credentials.
+    saved_connections = get_saved_connections()
+    existing = next((c for c in saved_connections if c.get("ssid") == ssid), None)
+    if existing and not password:
+        try:
+            result = run_nmcli_check("con", "up", existing["name"], timeout=35)
+            if result.returncode == 0:
+                return {
+                    "success": True,
+                    "message": f"Connected to saved network '{ssid}'.",
+                }
+            return {
+                "success": False,
+                "message": result.stderr.strip() or f"Failed to connect to saved network '{ssid}'",
+            }
+        except subprocess.TimeoutExpired:
+            return {"success": False, "message": "Connection timed out"}
+        except Exception as e:
+            logger.error("WiFi saved-network connect error: %s", e)
+            return {"success": False, "message": str(e)}
+
+    # Remember the currently active wlan0 connection. If the new credentials are
+    # wrong, restore this profile (or the ORYN hotspot) so the user is not locked out.
+    previous_connection = ""
+    try:
+        active = run_nmcli("-t", "-f", "NAME,DEVICE", "con", "show", "--active", timeout=10)
+        for line in active.splitlines():
+            if ":" not in line:
+                continue
+            name, device = line.rsplit(":", 1)
+            if device.strip() == "wlan0":
+                previous_connection = name.strip()
+                break
+    except Exception:
+        previous_connection = ""
+
+    pending_name = f"ORYN-Pending-{int(time.time())}"
+
+    try:
+        # Create a temporary profile. This DOES NOT delete any existing profile.
+        if password:
+            result = run_nmcli_check(
+                "con", "add",
+                "type", "wifi",
+                "ifname", "wlan0",
+                "con-name", pending_name,
+                "ssid", ssid,
+                "connection.autoconnect", "no",
+                "wifi-sec.key-mgmt", "wpa-psk",
+                "wifi-sec.psk", password,
+                timeout=15,
+            )
+        else:
+            result = run_nmcli_check(
+                "con", "add",
+                "type", "wifi",
+                "ifname", "wlan0",
+                "con-name", pending_name,
+                "ssid", ssid,
+                "connection.autoconnect", "no",
+                timeout=15,
+            )
+
+        if result.returncode != 0:
+            return {
+                "success": False,
+                "message": result.stderr.strip() or "Failed to create temporary WiFi profile",
+            }
+
+        # Attempt the new network before touching old credentials.
+        result = run_nmcli_check("con", "up", pending_name, timeout=35)
+        if result.returncode != 0:
+            run_nmcli_check("con", "delete", pending_name, timeout=10)
+
+            # Restore the connection from which setup was initiated.
+            if previous_connection:
+                run_nmcli_check("con", "up", previous_connection, timeout=20)
+            else:
+                _trigger_autohotspot()
+
+            return {
+                "success": False,
+                "message": result.stderr.strip() or "Failed to connect. Previous WiFi was preserved.",
+            }
+
+        # Confirm wlan0 actually received an IPv4 address.
+        connected_ip = ""
+        for _ in range(16):
+            await asyncio.sleep(0.5)
+            connected_ip = get_current_ip()
+            current = get_current_ssid()
+            if connected_ip and current:
+                break
+
+        if not connected_ip:
+            run_nmcli_check("con", "down", pending_name, timeout=10)
+            run_nmcli_check("con", "delete", pending_name, timeout=10)
+
+            if previous_connection:
+                run_nmcli_check("con", "up", previous_connection, timeout=20)
+            else:
+                _trigger_autohotspot()
+
+            return {
+                "success": False,
+                "message": "New WiFi did not obtain an IP address. Previous WiFi was restored.",
+            }
+
+        # New network works. Only now remove old profiles for THIS SAME SSID,
+        # while leaving every other saved network intact.
+        for item in saved_connections:
+            if item.get("ssid") == ssid and item.get("name") != pending_name:
+                run_nmcli_check("con", "delete", item["name"], timeout=10)
+
+        # Promote the tested profile to the normal saved profile.
+        # Use a stable connection name and enable autoconnect.
+        final_name = ssid
+        rename = run_nmcli_check(
+            "con", "modify", pending_name,
+            "connection.id", final_name,
+            "connection.autoconnect", "yes",
+            "connection.autoconnect-priority", "50",
+            timeout=10,
+        )
+        if rename.returncode != 0:
+            # Connection itself is already valid; keep the pending profile but
+            # ensure it autoconnects rather than treating rename failure as a
+            # network failure.
+            run_nmcli_check(
+                "con", "modify", pending_name,
+                "connection.autoconnect", "yes",
+                "connection.autoconnect-priority", "50",
+                timeout=10,
+            )
+
+        return {
+            "success": True,
+            "message": (
+                f"Connected to '{ssid}' and saved it for future use. "
+                "Other saved WiFi networks were kept."
+            ),
+        }
+
+    except subprocess.TimeoutExpired:
+        try:
+            run_nmcli_check("con", "delete", pending_name, timeout=10)
+        except Exception:
+            pass
+        if previous_connection:
+            try:
+                run_nmcli_check("con", "up", previous_connection, timeout=20)
+            except Exception:
+                pass
+        else:
+            _trigger_autohotspot()
+        return {"success": False, "message": "Connection timed out. Previous WiFi was preserved."}
+    except Exception as e:
+        logger.error("WiFi connect error: %s", e)
+        try:
+            run_nmcli_check("con", "delete", pending_name, timeout=10)
+        except Exception:
+            pass
+        if previous_connection:
+            try:
+                run_nmcli_check("con", "up", previous_connection, timeout=20)
+            except Exception:
+                pass
+        else:
+            _trigger_autohotspot()
+        return {"success": False, "message": f"{e}. Previous WiFi was preserved."}
+
+def save_network(ssid: str, password: str) -> dict:
+    if IS_WINDOWS:
+        try:
+            result = _windows_add_profile(ssid, password)
+            if result.returncode != 0:
+                msg = (result.stderr or result.stdout or "Failed to save network").strip()
+                return {"success": False, "message": msg}
+            return {"success": True, "message": f"Saved '{ssid}'. Windows can connect automatically when in range."}
+        except subprocess.TimeoutExpired:
+            return {"success": False, "message": "Operation timed out"}
+        except Exception as e:
+            logger.error("Windows WiFi save error: %s", e)
+            return {"success": False, "message": str(e)}
+
+    try:
+        subprocess.run([NMCLI, "con", "delete", ssid], capture_output=True, text=True, timeout=10)
+        if password:
+            result = run_nmcli_check(
+                "con", "add", "type", "wifi", "ifname", "wlan0",
+                "con-name", ssid, "ssid", ssid,
+                "wifi-sec.key-mgmt", "wpa-psk", "wifi-sec.psk", password,
+                timeout=15,
+            )
+        else:
+            result = run_nmcli_check(
+                "con", "add", "type", "wifi", "ifname", "wlan0",
+                "con-name", ssid, "ssid", ssid, timeout=15,
+            )
+        if result.returncode != 0:
+            return {"success": False, "message": result.stderr.strip() or "Failed to save network"}
+        return {"success": True, "message": f"Saved '{ssid}'. Will connect automatically when in range."}
+    except subprocess.TimeoutExpired:
+        return {"success": False, "message": "Operation timed out"}
+    except Exception as e:
+        logger.error("WiFi save error: %s", e)
+        return {"success": False, "message": str(e)}
+
+
+def forget_network(ssid: str) -> dict:
+    if IS_WINDOWS:
+        try:
+            result = _run_netsh("wlan", "delete", "profile", f"name={ssid}", timeout=15)
+            if result.returncode == 0:
+                return {"success": True, "message": f"Forgot '{ssid}'"}
+            return {"success": False, "message": (result.stderr or result.stdout or "Failed to delete profile").strip()}
+        except Exception as e:
+            return {"success": False, "message": str(e)}
+
+    current_ssid = get_current_ssid()
+    was_active = current_ssid == ssid or current_ssid == ssid.replace(" ", "")
+    saved = get_saved_connections()
+    con_name = next((c["name"] for c in saved if c["ssid"] == ssid), None)
+    if not con_name:
+        return {"success": False, "message": f"No saved connection found for '{ssid}'"}
+
+    try:
+        result = run_nmcli_check("con", "delete", con_name, timeout=15)
+        if result.returncode == 0:
+            if was_active:
+                _trigger_autohotspot()
+            return {"success": True, "message": f"Forgot '{ssid}'"}
+        return {"success": False, "message": result.stderr.strip() or "Failed to delete connection"}
+    except Exception as e:
+        return {"success": False, "message": str(e)}
+
+
+def get_hotspot_password() -> dict:
+    if IS_WINDOWS:
+        # ORYN autohotspot is a Raspberry Pi feature.
+        return {"password": ""}
+
+    try:
+        output = run_nmcli("-s", "-t", "-f", "802-11-wireless-security.psk",
+                           "con", "show", HOTSPOT_CON_NAME)
+        for line in output.strip().splitlines():
+            if "802-11-wireless-security.psk" in line:
+                psk = line.split(":", 1)[1] if ":" in line else ""
+                return {"password": psk}
+        return {"password": ""}
+    except Exception as e:
+        logger.error("Error getting hotspot password: %s", e)
+        return {"password": ""}
+
+
+def set_hotspot_password(password: str) -> dict:
+    if IS_WINDOWS:
+        return {
+            "success": False,
+            "message": "ORYN hotspot password management is available on Raspberry Pi only."
+        }
+
+    try:
+        if password:
+            if len(password) < 8:
+                return {"success": False, "message": "Password must be at least 8 characters"}
+            result = run_nmcli_check(
+                "con", "modify", HOTSPOT_CON_NAME,
+                "wifi-sec.key-mgmt", "wpa-psk", "wifi-sec.psk", password,
+            )
+        else:
+            result = run_nmcli_check(
+                "con", "modify", HOTSPOT_CON_NAME,
+                "remove", "802-11-wireless-security",
+            )
+        if result.returncode != 0:
+            return {"success": False, "message": result.stderr.strip() or "Failed to update hotspot password"}
+        if get_wifi_mode() == "hotspot":
+            run_nmcli_check("con", "down", HOTSPOT_CON_NAME, timeout=10)
+            run_nmcli_check("con", "up", HOTSPOT_CON_NAME, timeout=10)
+        msg = "Hotspot password updated" if password else "Hotspot password removed (open network)"
+        return {"success": True, "message": msg}
+    except Exception as e:
+        logger.error("Error setting hotspot password: %s", e)
+        return {"success": False, "message": str(e)}
+
+
+def _trigger_autohotspot():
+    if IS_WINDOWS:
+        return
+
+    autohotspot_path = "/usr/local/bin/autohotspot"
+    try:
+        if os.path.exists(autohotspot_path):
+            subprocess.Popen(
+                [autohotspot_path, "--check"],
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.DEVNULL,
+            )
+        else:
+            run_nmcli("dev", "disconnect", "wlan0")
+            run_nmcli("con", "up", HOTSPOT_CON_NAME)
+    except Exception as e:
+        logger.error("Failed to trigger autohotspot: %s", e)
