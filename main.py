@@ -3578,8 +3578,13 @@ async def add_to_queue(request: dict):
     if not pattern:
         raise HTTPException(status_code=400, detail="pattern is required")
 
-    # Verify the pattern file exists
-    pattern_path = os.path.join(pattern_manager.THETA_RHO_DIR, pattern)
+    # Verify the pattern file exists. Keep queued entries in the same resolved
+    # path format used by run_playlist/run_theta_rho_files (./patterns/...).
+    # Previously Add to Queue inserted only the UI-relative name (e.g.
+    # "circle.thr"). The playlist runner could clear for that item, then fail
+    # to open the main pattern because it looked for "circle.thr" in cwd.
+    normalized_pattern = normalize_file_path(pattern)
+    pattern_path = os.path.join(pattern_manager.THETA_RHO_DIR, normalized_pattern)
     if not os.path.exists(pattern_path):
         raise HTTPException(status_code=404, detail="Pattern file not found")
 
@@ -3593,7 +3598,7 @@ async def add_to_queue(request: dict):
         # Add to end
         insert_index = len(playlist)
 
-    playlist.insert(insert_index, pattern)
+    playlist.insert(insert_index, pattern_path)
     state.current_playlist = playlist
 
     return {"success": True, "position": insert_index}
