@@ -1,0 +1,44 @@
+ORYN Windows V10.4.1 PD1 Integration Verification
+=================================================
+
+Baseline: ORYN_WINDOWS_INSTALLABLE_V10_4_1_QUEUE_HOTFIX_SOURCE.zip
+Pattern Designer integration: PD-WIN-V1-20260831-1
+Pattern Designer UI: V2.0 Pro / 77 generators
+Locked motion baseline: UC-DUNE-MOTION-V9-20260827-1
+Pattern Forge baseline: PF-PRO-V10.4.1-20260828-1
+
+Generator registrations: 77
+Cartesian / XY preserved: YES
+Theta-Rho / Polar preserved: YES
+Save to ORYN Library bridge: YES
+Windows installer architecture preserved: PyInstaller + FastAPI + Edge WebView2 + Inno Setup
+
+Sensitive-file comparison against Windows baseline:
+- modules/core/pattern_manager.py: UNCHANGED
+- modules/connection/connection_manager.py: UNCHANGED
+- modules/core/playlist_manager.py: UNCHANGED
+- modules/pattern_generator/converter.py: UNCHANGED
+- packaging/windows/oryn_windows_entry.py: UNCHANGED
+- settings.json: UNCHANGED
+- machine_profile.json: UNCHANGED
+- Entire modules/ tree: BYTE-FOR-BYTE UNCHANGED
+
+Intentional changes/additions:
+- main.py: additive Pattern Designer route, launcher injection, and THR library-save bridge only.
+- static/dist/index.html: one additive launcher script tag fallback.
+- static/custom/oryn-pattern-designer-windows.js: new launcher.
+- static/pattern-designer/: new Pattern Designer assets.
+- packaging/windows_v10_4_1/ORYN-V10.4.1-PD1.iss: new installer output name only.
+- build-ORYN-Windows-V10.4.1-PD1.bat: new Windows build helper.
+- .github/workflows/build-windows-installer.yml: installer artifact renamed to PD1.
+
+Validation performed:
+- main.py parses successfully with Python AST.
+- Pattern Designer app.js passes node --check.
+- Windows launcher JS passes node --check.
+- Pattern Designer save route appears exactly once.
+- Pattern Designer page route appears exactly once.
+- Launcher is included in both backend injection and static-index fallback.
+
+Not performed in this Linux environment:
+- Native Windows PyInstaller/Inno Setup compilation. This must run on Windows or the included GitHub Actions windows-latest workflow.

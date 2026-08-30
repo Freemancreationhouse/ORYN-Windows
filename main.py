@@ -834,6 +834,9 @@ def get_frontend_response():
     uc_tag = '<script defer src="/static/custom/oryn-universal-calibration.js?v=UC-ACTUAL-SERVE-20260826-1"></script>'
     if uc_tag not in html:
         html = html.replace('</body>', uc_tag + '\n</body>')
+    pd_tag = '<script defer src="/static/custom/oryn-pattern-designer-windows.js?v=PD-WIN-V1-20260831-1"></script>'
+    if pd_tag not in html:
+        html = html.replace('</body>', pd_tag + '\n</body>')
     return HTMLResponse(
         html,
         headers={
@@ -851,6 +854,25 @@ async def index():
 @app.get("/settings", include_in_schema=False)
 async def settings_page():
     return get_frontend_response()
+
+@app.get("/pattern-designer", include_in_schema=False)
+async def pattern_designer_page():
+    designer_index = Path("static") / "pattern-designer" / "index.html"
+    if not designer_index.exists():
+        raise HTTPException(status_code=503, detail="ORYN Pattern Designer assets are missing")
+    html = designer_index.read_text(encoding="utf-8")
+    if '<base href="/static/pattern-designer/">' not in html:
+        html = html.replace('<head>', '<head>\n  <base href="/static/pattern-designer/">', 1)
+    return HTMLResponse(
+        html,
+        headers={
+            "Cache-Control": "no-store, no-cache, must-revalidate, max-age=0",
+            "Pragma": "no-cache",
+            "Expires": "0",
+            "X-ORYN-Pattern-Designer": "PD-WIN-V1-20260831-1",
+        },
+    )
+
 
 @app.get("/registerSW.js", include_in_schema=False)
 async def oryn_register_service_worker():
@@ -2099,6 +2121,10 @@ class PatternGeneratorSaveRequest(BaseModel):
     token: str
     name: str
 
+class PatternDesignerSaveRequest(BaseModel):
+    name: str
+    thr: str
+
 async def _run_pattern_generator_job(job_id: str, source: str, preview: str, params: dict):
     """Worker for Pattern Forge conversion. Never touches machine motion state."""
     from modules.pattern_generator.converter import convert_upload_to_thr, thr_text
@@ -2259,6 +2285,102 @@ async def pattern_generator_save(request: PatternGeneratorSaveRequest):
     except OSError: pass
     _PATTERN_GENERATOR_JOBS.pop(token,None)
     return {"success":True,"path":rel,"name":safe_name}
+
+# ============================================================================
+# ORYN Pattern Designer — Windows library bridge
+# ============================================================================
+# Additive integration only. This endpoint writes a generated THR file into
+# the existing custom pattern library and creates the normal ORYN preview.
+# It never calls machine motion, calibration, clearing, or playback routines.
+@app.get("/api/pattern-designer/status", tags=["pattern-designer"])
+async def pattern_designer_status():
+    return {
+        "enabled": True,
+        "version": "2.0-pro-77",
+        "integration": "PD-WIN-V1-20260831-1",
+        "library": "custom_patterns",
+        "platform": "windows-desktop",
+    }
+
+
+@app.post("/api/pattern-designer/save", tags=["pattern-designer"])
+async def pattern_designer_save(request: PatternDesignerSaveRequest):
+    raw = request.thr or ""
+    encoded = raw.encode("utf-8")
+    if not raw.strip():
+        raise HTTPException(status_code=400, detail="Generated THR data is empty")
+    if len(encoded) > 12 * 1024 * 1024:
+        raise HTTPException(status_code=413, detail="Generated THR file is too large")
+
+    valid_points = 0
+    max_rho = 0.0
+    for line_number, raw_line in enumerate(raw.splitlines(), start=1):
+        line = raw_line.strip()
+        if not line or line.startswith("#"):
+            continue
+        parts = line.split()
+        if len(parts) != 2:
+            raise HTTPException(status_code=400, detail=f"Invalid THR data on line {line_number}")
+        try:
+            theta = float(parts[0])
+            rho = float(parts[1])
+        except ValueError:
+            raise HTTPException(status_code=400, detail=f"Invalid THR number on line {line_number}")
+        if theta != theta or rho != rho or abs(theta) == float("inf") or abs(rho) == float("inf"):
+            raise HTTPException(status_code=400, detail=f"Non-finite THR value on line {line_number}")
+        if rho < -0.0001 or rho > 1.0005:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Pattern exceeds the table boundary (rho={rho:.4f} on line {line_number}). Adjust scale/offset before saving."
+            )
+        valid_points += 1
+        max_rho = max(max_rho, rho)
+
+    if valid_points < 2:
+        raise HTTPException(status_code=400, detail="Generated THR must contain at least two coordinates")
+
+    safe_name = re.sub(r'[^A-Za-z0-9 _.-]+', '_', request.name or '').strip(' ._')
+    safe_name = re.sub(r'\s+', ' ', safe_name)[:120].strip()
+    if not safe_name:
+        raise HTTPException(status_code=400, detail="Enter a pattern name")
+    if not safe_name.lower().endswith('.thr'):
+        safe_name += '.thr'
+
+    custom_dir = os.path.join(pattern_manager.THETA_RHO_DIR, "custom_patterns")
+    os.makedirs(custom_dir, exist_ok=True)
+    destination = os.path.join(custom_dir, safe_name)
+    if os.path.exists(destination):
+        raise HTTPException(status_code=409, detail="A pattern with this name already exists")
+
+    temp_destination = destination + f".tmp-{uuid.uuid4().hex}"
+    try:
+        with open(temp_destination, "w", encoding="utf-8", newline="\n") as fh:
+            fh.write(raw if raw.endswith("\n") else raw + "\n")
+        os.replace(temp_destination, destination)
+    except Exception:
+        try:
+            os.remove(temp_destination)
+        except OSError:
+            pass
+        raise
+
+    relative_path = f"custom_patterns/{safe_name}"
+    preview_ready = False
+    try:
+        preview_ready = bool(await generate_image_preview(relative_path))
+    except Exception as exc:
+        logger.warning(f"Pattern Designer pattern saved but preview generation failed: {exc}")
+
+    logger.info(f"Pattern Designer saved {relative_path} ({valid_points} points, max rho {max_rho:.4f})")
+    return {
+        "success": True,
+        "path": relative_path,
+        "name": safe_name,
+        "points": valid_points,
+        "max_rho": round(max_rho, 6),
+        "preview_ready": preview_ready,
+    }
+
 
 @app.get("/api/v2/capabilities")
 async def api_v2_capabilities():

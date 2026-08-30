@@ -1,4 +1,4 @@
-name: Build ORYN Windows V10.4.1 Installer
+name: Build ORYN Windows V10.4.1 PD1 Installer
 
 on:
   workflow_dispatch:
@@ -52,19 +52,20 @@ jobs:
           $iscc = "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe"
           if (!(Test-Path $iscc)) { $iscc = "$env:ProgramFiles\Inno Setup 6\ISCC.exe" }
           if (!(Test-Path $iscc)) { throw "Inno Setup compiler not found" }
-          & $iscc "packaging\windows_v10_4_1\ORYN-V10.4.1.iss"
+          & $iscc "packaging\windows_v10_4_1\ORYN-V10.4.1-PD1.iss"
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
-          if (!(Test-Path "release/ORYN-Windows-Setup-V10.4.1.exe")) { throw "Installer was not created" }
+          if (!(Test-Path "release/ORYN-Windows-Setup-V10.4.1-PD1.exe")) { throw "Installer was not created" }
 
       - name: Generate SHA-256 and build information
         shell: pwsh
         run: |
-          $installer = "release/ORYN-Windows-Setup-V10.4.1.exe"
+          $installer = "release/ORYN-Windows-Setup-V10.4.1-PD1.exe"
           $hash = (Get-FileHash $installer -Algorithm SHA256).Hash.ToLower()
-          "$hash  ORYN-Windows-Setup-V10.4.1.exe" | Set-Content "release/ORYN-Windows-Setup-V10.4.1.exe.sha256"
+          "$hash  ORYN-Windows-Setup-V10.4.1-PD1.exe" | Set-Content "release/ORYN-Windows-Setup-V10.4.1-PD1.exe.sha256"
           @"
-          ORYN Windows Setup V10.4.1
+          ORYN Windows Setup V10.4.1 PD1
           Pattern Forge: PF-PRO-V10.4.1-20260828-1
+          Pattern Designer: PD-WIN-V1-20260831-1 (77 generators)
           Locked motion baseline: UC-DUNE-MOTION-V9-20260827-1
           Python/Node/Git required on customer PC: NO
           Target: Windows 10/11 x64
@@ -74,10 +75,10 @@ jobs:
       - name: Upload Windows installer
         uses: actions/upload-artifact@v7
         with:
-          name: ORYN-Windows-V10.4.1-Installer
+          name: ORYN-Windows-V10.4.1-PD1-Installer
           path: |
-            release/ORYN-Windows-Setup-V10.4.1.exe
-            release/ORYN-Windows-Setup-V10.4.1.exe.sha256
+            release/ORYN-Windows-Setup-V10.4.1-PD1.exe
+            release/ORYN-Windows-Setup-V10.4.1-PD1.exe.sha256
             release/BUILD-INFO.txt
           if-no-files-found: error
           retention-days: 30
